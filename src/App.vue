@@ -1,5 +1,5 @@
 <template>
-  
+  <p>JourneyMapStitcherGUI</p>
 </template>
 
 
