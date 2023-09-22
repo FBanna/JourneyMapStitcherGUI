@@ -1,2 +1,2 @@
 yarn tauri dev
-pause
+PAUSE
