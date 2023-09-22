@@ -16,7 +16,7 @@ dist-ssr
 .vscode/*
 vscode*
 !.vscode/extensions.json
-Journey-Map-Stitcher-GUI.code-workspace*
+Journey-Map-Stitcher-GUI.code-workspace
 .idea
 .DS_Store
 *.suo
