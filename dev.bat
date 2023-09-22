@@ -1,0 +1,2 @@
+yarn tauri dev
+pause
