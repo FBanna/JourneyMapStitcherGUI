@@ -5,16 +5,25 @@
   </div>
   <div class="inputsBorder">
     <div class="inputs">
+
+
+
+
+      
+
       <label for="x">Enter X coord:</label><br>
-      <input type="number" name="x" value="0"><br><br>
+      <input class="inputsForm" type="number" name="x" value="0"><br><br>
 
       <label for="y">Enter Y coord:</label><br>
-      <input type="number" name="y" value="0"><br><br>
+      <input class="inputsForm" type="number" name="y" value="0"><br><br>
 
-      <button>Goto</button>
+      <button class="inputsButton">Goto</button>
       <br><br>
-      <button>Stitch</button>
+      <button class="inputsButton">Stitch</button>
       
+
+
+
 
     </div>
   </div>
@@ -38,6 +47,22 @@
 
 
 <style>
+
+  .inputsButton{
+    border: none;
+    background-color: #ae00ff;
+    color: white;
+    border-radius: 3px;
+    width: 50px;
+    height: 20px;
+    font-size: 13px;
+    transition-duration: 0.2s;
+  }
+
+  .inputsButton:hover{
+    background-color: #01AFE4;
+  }
+
   .inputs{
     position: absolute;
     right: 20px;
@@ -45,11 +70,29 @@
     width: 180px;
   }
 
+  .inputsForm{
+    border-radius: 3px;
+    border: 2px solid #ae00ff;
+    -webkit-transition: 0.2s;
+    transition: 0.2s;
+    outline: none;
+  }
+
+  .inputsForm:focus{
+    border: 2px solid #01AFE4;
+  }
+
+  input::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
   .inputsBorder{
     position: absolute;
     right: 0px;
     top: 0px;
-    background-color: #2196F3;
+    background-color: #e0abfb;
     width: 220px;
     height: 100vh;
   }
@@ -59,7 +102,7 @@
     display: grid;
     grid-template-columns: min-content min-content min-content min-content;
     gap: 1px;
-    background-color: #2196F3;
+    background-color: #01AFE4;
     user-select: initial;
 
   }
