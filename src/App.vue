@@ -1,30 +1,46 @@
 <template>
-  <p>JourneyMapStitcherGUI</p>
-  <div class="grid">
 
-  </div>
+  <div id="mapid" class="map"></div>
+
+
   <div class="inputsBorder">
     <div class="inputs">
 
       <input type="radio" class="radios" name="type" value="center" v-model="type">
-      <label for="html">center</label><br>
+      <label for="center" @click="type = 'center'"> center</label><br>
       <input type="radio" class="radios" name="type" value="span" v-model="type">
-      <label for="css">span</label><br><br>
+      <label for="span" @click="type = 'span'"> span</label><br><br>
+      {{ x1 }} {{ y1 }} {{ x2 }} {{ y2 }}
 
 
-      
       <div v-if="type == 'center'">
         <label for="x">Enter X coord:</label><br>
-        <input class="inputsForm" type="number" name="x" value="0"><br><br>
+        <input class="inputsForm" type="number" name="x" v-model="x1"><br><br>
 
         <label for="y">Enter Y coord:</label><br>
-        <input class="inputsForm" type="number" name="y" value="0"><br><br>
+        <input class="inputsForm" type="number" name="y" v-model="y1"><br><br>
 
         <label for="radius">Enter radius:</label><br>
         <input class="inputsForm" type="number" name="radius" max="65024" v-model="radius"><br><br>
         <div v-if="radius > 65024">
           IMPUT VALUE LESS THAN 65024     
         </div>
+
+      </div>
+
+      <div v-if="type == 'span'">
+
+        <label for="x1">Enter X coord 1:</label><br>
+        <input class="inputsForm" type="number" name="x1" v-model="x1"><br><br>
+
+        <label for="y1">Enter Y coord 1:</label><br>
+        <input class="inputsForm" type="number" name="y1" v-model="y1"><br><br>
+
+        <label for="x2">Enter X coord 2:</label><br>
+        <input class="inputsForm" type="number" name="x2" v-model="x2"><br><br>
+
+        <label for="y2">Enter Y coord 2:</label><br>
+        <input class="inputsForm" type="number" name="y2" v-model="y2"><br><br>
 
       </div>
 
@@ -39,7 +55,7 @@
     </div>
 
     <div class="calls">
-      <button class="inputsButton">Goto</button>
+      <button class="inputsButton" @click="goto">Goto</button>
       <br><br>
       <button class="inputsButton">Stitch</button>
     </div>
@@ -55,28 +71,63 @@
 <script setup>
   
 
-  import { ref, computed } from 'vue'
+  import { ref, computed, onMounted } from 'vue'
+  import leaflet from "leaflet";
   //import { invoke } from '@tauri-apps/api' 
   //import { convertFileSrc } from '@tauri-apps/api/tauri';
   //import { homeDir, join} from '@tauri-apps/api/path';
   //import { save } from "@tauri-apps/api/dialog";
   var type = ref("center")
   var radius = ref(0)
+  var map;
+
+  var x1 = ref(51.505) //stating x y values also used for span and used as x y for center
+  var y1 = ref(-0.09)
+
+  var x2 = ref(0)
+  var y2 = ref(0)
+
+  onMounted(() => {
+    
+    map = leaflet.map('mapid').setView([x1.value, y2.value], 13);
+    
+    leaflet.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+    }).addTo(map);
+  })
+
+  function goto(){
+    map.setView([x1.value,y1.value],13)
+  }
 
 </script>
 
 
 <style>
+  .leaflet-control-attribution.leaflet-control {
+    display: none;
+  }
+  .map{
+    height: 600px;
+    width: 600px;
+    margin: -8px;
+    left: 0px;
+    right: 0px;
+    border: 0px;
+    padding: 0px;
+  }
+
 
   .inputsButton{
     border: none;
     background-color: #ae00ff;
     color: white;
     border-radius: 3px;
-    width: 50px;
+    width: 60px;
     height: 20px;
     font-size: 13px;
     transition-duration: 0.2s;
+    font-family: Verdana, sans-serif;
   }
 
   .radios[type="radio"]{
@@ -145,24 +196,7 @@
     background-color: #e0abfb;
     width: 220px;
     height: 100vh;
-  }
-
-
-  .grid {
-    display: grid;
-    grid-template-columns: min-content min-content min-content min-content;
-    gap: 1px;
-    background-color: #01AFE4;
-    user-select: initial;
-
-  }
-
-  .grid > div {
-    background-color: rgba(255, 255, 255, 0.8);
-    border: 3px solid black;
-    text-align: center;
-    font-size: 5px;
-    user-select: initial;
+    font-family: Verdana, sans-serif;
   }
 
 </style>
