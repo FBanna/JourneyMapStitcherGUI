@@ -57,7 +57,7 @@
     <div class="calls">
       <button class="inputsButton" @click="goto">Goto</button>
       <br><br>
-      <button class="inputsButton">Stitch</button>
+      <button class="inputsButton" @click="stitch">Stitch</button>
     </div>
 
   </div>
@@ -73,6 +73,7 @@
 
   import { ref, computed, onMounted } from 'vue'
   import leaflet from "leaflet";
+  import { invoke } from '@tauri-apps/api';
   //import { invoke } from '@tauri-apps/api' 
   //import { convertFileSrc } from '@tauri-apps/api/tauri';
   //import { homeDir, join} from '@tauri-apps/api/path';
@@ -100,6 +101,10 @@
     map.setView([x1.value,y1.value],13)
   }
 
+  async function stitch(){
+    console.log("stitch")
+    await invoke("stitch", {x1: Math.round(x1.value), y1: Math.round(y1.value), x2: Math.round(x2.value), y2: Math.round(y2.value), style: type.value})
+  }
 </script>
 
 
