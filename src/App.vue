@@ -103,7 +103,7 @@
 
   async function stitch(){
     console.log("stitch")
-    await invoke("stitch", {x1: Math.round(x1.value), y1: Math.round(y1.value), x2: Math.round(x2.value), y2: Math.round(y2.value), style: type.value})
+    await invoke("stitch", {x1: x1.value, y1: y1.value, x2: x2.value, y2: y2.value, radius: radius.value, style: type.value})
   }
 </script>
 
