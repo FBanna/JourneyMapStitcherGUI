@@ -6,8 +6,8 @@
 fn stitch(x1: f32, y1: f32, x2:f32, y2:f32, radius: f32, style: String){
     println!("stitch called with {} {} {} {}", x1, y1, x2, y2);
 
-    let mut startxtile: f32 = 0.0;
-    let mut startytile: f32 = 0.0;
+    let mut startxtile: i32 = 0;
+    let mut startytile: i32 = 0;
 
     let mut xsize: f32 = 0.0;
     let mut ysize: f32 = 0.0;
@@ -18,7 +18,7 @@ fn stitch(x1: f32, y1: f32, x2:f32, y2:f32, radius: f32, style: String){
     let mut x: i32;
     let mut y: i32;
 
-    let save: String;
+    let mut save: String;
 
     if style == "span"{
         xsize = f32::abs((x1-x2)/512.0);
@@ -28,15 +28,15 @@ fn stitch(x1: f32, y1: f32, x2:f32, y2:f32, radius: f32, style: String){
 
 
         if x1 < x2{
-            startxtile = f32::abs(x1/512.0);
+            startxtile = i32::abs(x1 as i32/512);
         } else {
-            startxtile = f32::abs(x2/512.0);
+            startxtile = i32::abs(x2 as i32/512);
         }
 
         if y1 < y2{
-            startytile = f32::abs(y1/512.0);
+            startytile = i32::abs(y1 as i32/512);
         } else {
-            startytile = f32::abs(y2/512.0);
+            startytile = i32::abs(y2 as i32/512);
         }
 
         println!("image going from {}, {} to {}, {} starting at {}, {} with a size of {}, {}", x1,y1,x2,y2,startxtile,startytile,xsize,ysize);
@@ -48,8 +48,8 @@ fn stitch(x1: f32, y1: f32, x2:f32, y2:f32, radius: f32, style: String){
         xsize = f32::abs((radius*2.0)/512.0);
         ysize = f32::abs((radius*2.0)/512.0);
 
-        startxtile = f32::abs((x1-radius)/512.0);
-        startytile = f32::abs((y1-radius)/512.0);
+        startxtile = i32::abs((x1 as i32-radius as i32)/512);
+        startytile = i32::abs((y1 as i32-radius as i32)/512);
 
         println!("image with center at {}, {} and radius of {} starting at {}, {}", x1, y1, radius, startxtile, startytile);
     } else {
@@ -80,16 +80,17 @@ fn stitch(x1: f32, y1: f32, x2:f32, y2:f32, radius: f32, style: String){
         }
 
 
-        let imagesizex: i32 = imagesizex.round() as i32;
-        let imagesizey: i32 = imagesizey.round() as i32;
-
-
         println!("x size now = {}", imagesizex);
         println!("y size now = {}", imagesizey);
     }
 
+    
     let neededx: i32 = (xsize/imagesizex).ceil() as i32;
     let neededy: i32 = (ysize/imagesizey).ceil() as i32;
+
+
+    let imagesizex: i32 = imagesizex.round() as i32;
+    let imagesizey: i32 = imagesizey.round() as i32;
 
     println!("creating {} image/s,", neededx * neededy);
 
@@ -99,14 +100,16 @@ fn stitch(x1: f32, y1: f32, x2:f32, y2:f32, radius: f32, style: String){
             y = (yimages*imagesizey) + startytile;
 
             save = format!("out {},{}",ximages,yimages);
+
+            creation(x,y,imagesizex,imagesizey,save)
         }
     }
 
 
 }
 
-fn creation(startingx: f32, startingy: f32, width: f32, height: f32, out: String){
-    
+fn creation(startingx: i32, startingy: i32, width: i32, height: i32, out: String){
+
 }
 
 fn main() {
