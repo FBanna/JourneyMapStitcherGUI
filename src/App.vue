@@ -113,8 +113,8 @@
     display: none;
   }
   .map{
-    height: 600px;
-    width: 600px;
+    height: 100vh;
+    width: calc(100% - 204px);
     margin: -8px;
     left: 0px;
     right: 0px;
@@ -200,7 +200,7 @@
     top: 0px;
     background-color: #e0abfb;
     width: 220px;
-    height: 100vh;
+    height: 100%;
     font-family: Verdana, sans-serif;
   }
 
