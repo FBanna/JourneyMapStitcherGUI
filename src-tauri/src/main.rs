@@ -1,7 +1,9 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-// Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
+use std::path::Path;
+
+
 #[tauri::command]
 fn stitch(x1: f32, y1: f32, x2:f32, y2:f32, radius: f32, style: String){
     println!("stitch called with {} {} {} {}", x1, y1, x2, y2);
@@ -12,13 +14,11 @@ fn stitch(x1: f32, y1: f32, x2:f32, y2:f32, radius: f32, style: String){
     let mut xsize: f32 = 0.0;
     let mut ysize: f32 = 0.0;
 
-    let mut imagesizex: f32 = 0.0;
-    let mut imagesizey: f32 = 0.0;
-
     let mut x: i32;
     let mut y: i32;
 
     let mut save: String;
+    let mut targetfile: String;
 
     if style == "span"{
         xsize = f32::abs((x1-x2)/512.0);
@@ -62,8 +62,8 @@ fn stitch(x1: f32, y1: f32, x2:f32, y2:f32, radius: f32, style: String){
     //             //
     /////////////////
 
-    imagesizex = xsize;
-    imagesizex = xsize;
+    let mut imagesizex: f32 = xsize;
+    let mut imagesizey: f32 = ysize;
 
     if xsize > 127.0 || ysize > 127.0 {
 
@@ -91,7 +91,8 @@ fn stitch(x1: f32, y1: f32, x2:f32, y2:f32, radius: f32, style: String){
 
     let imagesizex: i32 = imagesizex.round() as i32;
     let imagesizey: i32 = imagesizey.round() as i32;
-
+    println!("{} {} {} {}", neededx, neededy, imagesizex, imagesizey);
+    println!("{} {}", xsize, ysize);
     println!("creating {} image/s,", neededx * neededy);
 
     for ximages in 0 .. neededx {
@@ -109,7 +110,29 @@ fn stitch(x1: f32, y1: f32, x2:f32, y2:f32, radius: f32, style: String){
 }
 
 fn creation(startingx: i32, startingy: i32, width: i32, height: i32, out: String){
+    // make image with width and height
 
+    for xaxis in 0 .. width {
+        for yaxis in 0 .. height {
+
+            x = xaxis + startingx;
+            y = yaxis + startingy;
+
+            targetfile = format!("day/{},{}.png", x, y);
+            let path = Path::new(file_path);
+
+            if path.exists() {
+                println!("File exists!");
+            } else {
+                println!("File does not exist!");
+            }
+
+            
+            if Path::new(targetfile).is_file() == True{
+                println!("{} exists", targetfile);
+            }
+        }
+    }
 }
 
 fn main() {
