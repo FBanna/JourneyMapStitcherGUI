@@ -2,7 +2,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use std::path::Path;
-
+use image::{GenericImage, GenericImageView, ImageBuffer, Pixel, Primitive};
+use std::env;
 
 #[tauri::command]
 fn stitch(x1: f32, y1: f32, x2:f32, y2:f32, radius: f32, style: String){
@@ -111,7 +112,13 @@ fn stitch(x1: f32, y1: f32, x2:f32, y2:f32, radius: f32, style: String){
 
 fn creation(startingx: i32, startingy: i32, width: i32, height: i32, out: String){
     // make image with width and height
+    let mut x: i32;
+    let mut y: i32;
+    let mut targetfile: String;
 
+    let mut imgbuf = image::ImageBuffer::new((width*512) as u32,(height*512) as u32);
+
+    println!("{} {} {} {} {}", startingx*512, startingy*512, width*512, height*512, out);
     for xaxis in 0 .. width {
         for yaxis in 0 .. height {
 
@@ -119,20 +126,20 @@ fn creation(startingx: i32, startingy: i32, width: i32, height: i32, out: String
             y = yaxis + startingy;
 
             targetfile = format!("day/{},{}.png", x, y);
-            let path = Path::new(file_path);
+            let path = Path::new(&targetfile);
 
             if path.exists() {
-                println!("File exists!");
-            } else {
-                println!("File does not exist!");
-            }
+                println!("{} exists!", targetfile);
 
-            
-            if Path::new(targetfile).is_file() == True{
-                println!("{} exists", targetfile);
+                let tempimg = image::open(targetfile).unwrap();
+                imgbuf.copy_from(&tempimg, (x*512) as u32, (y*512) as u32);
+
             }
         }
     }
+
+
+    imgbuf.save("test.jpg").unwrap();
 }
 
 fn main() {
