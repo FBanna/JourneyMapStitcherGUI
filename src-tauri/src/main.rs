@@ -22,23 +22,23 @@ fn stitch(x1: f32, y1: f32, x2:f32, y2:f32, mut radius: f32, style: String){
     let mut targetfile: String;
 
     if style == "span"{
-        xsize = f32::abs((x1-x2)/512.0);
-        ysize = f32::abs((y1-y2)/512.0);
+        xsize = ((x1-x2)/512.0).round();
+        ysize = ((y1-y2)/512.0).round();
         
 
         
 
 
         if x1 < x2{
-            startxtile = i32::abs(x1 as i32/512);
+            startxtile = ((x1/512.0).round()) as i32;
         } else {
-            startxtile = i32::abs(x2 as i32/512);
+            startxtile = ((x2/512.0).round()) as i32;
         }
 
         if y1 < y2{
-            startytile = i32::abs(y1 as i32/512);
+            startytile = ((y1/512.0).round()) as i32;
         } else {
-            startytile = i32::abs(y2 as i32/512);
+            startytile = ((y2/512.0).round()) as i32;
         }
 
         println!("image going from {}, {} to {}, {} starting at {}, {} with a size of {}, {}", x1,y1,x2,y2,startxtile,startytile,xsize,ysize);
@@ -149,6 +149,7 @@ fn creation(startingx: i32, startingy: i32, width: i32, height: i32, out: String
 
 
     imgbuf.save("test.jpg").unwrap();
+    //image::save_buffer("image.png", imgbuf, width as u32, height as u32, image::ColorType::Rgb8).unwrap()
 }
 
 fn main() {
