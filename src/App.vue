@@ -79,11 +79,13 @@
   //import { homeDir, join} from '@tauri-apps/api/path';
   //import { save } from "@tauri-apps/api/dialog";
   var type = ref("center")
-  var radius = ref(0)
+  var radius = ref(1000)
   var map;
 
-  var x1 = ref(51.505) //stating x y values also used for span and used as x y for center
-  var y1 = ref(-0.09)
+  //var x1 = ref(51.505) //stating x y values also used for span and used as x y for center
+  //var y1 = ref(-0.09)
+  var x1 = ref(0) //stating x y values also used for span and used as x y for center
+  var y1 = ref(0)
 
   var x2 = ref(0)
   var y2 = ref(0)

@@ -6,7 +6,7 @@ use image::{GenericImage, GenericImageView, ImageBuffer, Pixel, Primitive};
 use std::env;
 
 #[tauri::command]
-fn stitch(x1: f32, y1: f32, x2:f32, y2:f32, radius: f32, style: String){
+fn stitch(x1: f32, y1: f32, x2:f32, y2:f32, mut radius: f32, style: String){
     println!("stitch called with {} {} {} {}", x1, y1, x2, y2);
 
     let mut startxtile: i32 = 0;
@@ -24,6 +24,7 @@ fn stitch(x1: f32, y1: f32, x2:f32, y2:f32, radius: f32, style: String){
     if style == "span"{
         xsize = f32::abs((x1-x2)/512.0);
         ysize = f32::abs((y1-y2)/512.0);
+        
 
         
 
@@ -43,19 +44,26 @@ fn stitch(x1: f32, y1: f32, x2:f32, y2:f32, radius: f32, style: String){
         println!("image going from {}, {} to {}, {} starting at {}, {} with a size of {}, {}", x1,y1,x2,y2,startxtile,startytile,xsize,ysize);
     } else if style == "center" {
         if radius == 0.0 {
-            let radius = 32512;
+            radius = 32512.0;
         }
+        
+        xsize = ((radius*2.0)/512.0).round();
+        ysize = ((radius*2.0)/512.0).round();
 
-        xsize = f32::abs((radius*2.0)/512.0);
-        ysize = f32::abs((radius*2.0)/512.0);
+        startxtile = ((((x1)-(radius))/512.0).round()) as i32;
 
-        startxtile = i32::abs((x1 as i32-radius as i32)/512);
-        startytile = i32::abs((y1 as i32-radius as i32)/512);
+        startytile = ((((y1)-(radius))/512.0).round()) as i32;
 
         println!("image with center at {}, {} and radius of {} starting at {}, {}", x1, y1, radius, startxtile, startytile);
+        println!("({}, {})\nto\n({}, {})\n", ((x1 as i32)-(radius as i32)), ((y1 as i32)-(radius as i32)), ((x1 as i32)+(radius as i32)), ((y1 as i32)+ (radius as i32)));
+    
     } else {
         println!("enter valid style!");
     }
+
+    println!("starting at: ({}, {})\n", startxtile, startytile);
+    println!("x width = {} tiles\n", xsize);
+    println!("y width = {} tiles\n", ysize);
 
     /////////////////
     //             //
@@ -70,14 +78,14 @@ fn stitch(x1: f32, y1: f32, x2:f32, y2:f32, radius: f32, style: String){
 
         while imagesizex > 127.0 {
             println!("x size = {} too large SPLITTING!", imagesizex);
-            imagesizex = f32::abs(imagesizex/2.0);
+            imagesizex = imagesizex/2.0;
         }
 
         
 
         while imagesizey > 127.0 {
             println!("y size = {} too large SPLITTING!", imagesizey);
-            imagesizey = f32::abs(imagesizey/2.0);
+            imagesizey = imagesizey/2.0;
         }
 
 
@@ -86,15 +94,15 @@ fn stitch(x1: f32, y1: f32, x2:f32, y2:f32, radius: f32, style: String){
     }
 
     
-    let neededx: i32 = (xsize/imagesizex).ceil() as i32;
-    let neededy: i32 = (ysize/imagesizey).ceil() as i32;
+    let neededx: i32 = ((xsize/imagesizex).ceil()) as i32;
+    let neededy: i32 = ((ysize/imagesizey).ceil()) as i32;
 
 
     let imagesizex: i32 = imagesizex.round() as i32;
     let imagesizey: i32 = imagesizey.round() as i32;
-    println!("{} {} {} {}", neededx, neededy, imagesizex, imagesizey);
-    println!("{} {}", xsize, ysize);
-    println!("creating {} image/s,", neededx * neededy);
+    //println!("{} {} {} {}", neededx, neededy, imagesizex, imagesizey);
+    //println!("{} {}", xsize, ysize);
+    //println!("creating {} image/s,", neededx * neededy);
 
     for ximages in 0 .. neededx {
         for yimages in 0 .. neededy {
@@ -102,8 +110,9 @@ fn stitch(x1: f32, y1: f32, x2:f32, y2:f32, radius: f32, style: String){
             y = (yimages*imagesizey) + startytile;
 
             save = format!("out {},{}",ximages,yimages);
-
-            creation(x,y,imagesizex,imagesizey,save)
+            //println!("{}, {}, {}, {}, {}", x, y, imagesizex, imagesizey, save);
+            creation(x,y,imagesizex,imagesizey,save);
+            
         }
     }
 
@@ -118,7 +127,7 @@ fn creation(startingx: i32, startingy: i32, width: i32, height: i32, out: String
 
     let mut imgbuf = image::ImageBuffer::new((width*512) as u32,(height*512) as u32);
 
-    println!("{} {} {} {} {}", startingx*512, startingy*512, width*512, height*512, out);
+    //println!("{} {} {} {} {}", startingx*512, startingy*512, width*512, height*512, out);
     for xaxis in 0 .. width {
         for yaxis in 0 .. height {
 
@@ -132,7 +141,7 @@ fn creation(startingx: i32, startingy: i32, width: i32, height: i32, out: String
                 println!("{} exists!", targetfile);
 
                 let tempimg = image::open(targetfile).unwrap();
-                imgbuf.copy_from(&tempimg, (x*512) as u32, (y*512) as u32);
+                imgbuf.copy_from(&tempimg, (xaxis*512) as u32, (yaxis*512) as u32);
 
             }
         }
