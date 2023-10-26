@@ -4,7 +4,8 @@
 use std::path::Path;
 use image::{GenericImage, GenericImageView, ImageBuffer, Pixel, Primitive};
 use std::env;
-
+use turbojpeg;
+use std::fs::write;
 #[tauri::command]
 fn stitch(x1: f32, y1: f32, x2:f32, y2:f32, mut radius: f32, style: String){
     println!("stitch called with {} {} {} {}", x1, y1, x2, y2);
@@ -119,14 +120,29 @@ fn stitch(x1: f32, y1: f32, x2:f32, y2:f32, mut radius: f32, style: String){
 
 }
 
+
+fn get_tile(x: i32, y: i32) {
+    println!("get_tile called with {} {}", x, y);
+
+    let targetfile: String = format!("day/{},{}.png", x, y);
+
+    let path = Path::new(&targetfile);
+
+    if path.exists() {
+        println!("found tile {},{}.png", x, y);
+        let tile = image::open(targetfile).unwrap();
+
+    }
+}
+
 fn creation(startingx: i32, startingy: i32, width: i32, height: i32, out: String){
     // make image with width and height
+
     let mut x: i32;
     let mut y: i32;
     let mut targetfile: String;
 
     let mut imgbuf = image::ImageBuffer::new((width*512) as u32,(height*512) as u32);
-
     //println!("{} {} {} {} {}", startingx*512, startingy*512, width*512, height*512, out);
     for xaxis in 0 .. width {
         for yaxis in 0 .. height {
@@ -148,8 +164,18 @@ fn creation(startingx: i32, startingy: i32, width: i32, height: i32, out: String
     }
 
 
-    imgbuf.save("test.jpg").unwrap();
+    //imgbuf.save("test.png").unwrap();
     //image::save_buffer("image.png", imgbuf, width as u32, height as u32, image::ColorType::Rgb8).unwrap()
+    //image::save_buffer(&Path::new("image.jpg"), imgbuf, 800, 600, image::RGBA(8))
+
+
+    
+    // compress `image` into JPEG with quality 95 and 2x2 chrominance subsampling
+    // https://docs.rs/turbojpeg/0.5.4/turbojpeg/enum.Subsamp.html
+    let jpeg_data = turbojpeg::compress_image(&imgbuf, 100, turbojpeg::Subsamp::Sub2x2).unwrap();
+
+    // write the JPEG to disk
+    std::fs::write("test.jpg", &jpeg_data);
 }
 
 fn main() {
