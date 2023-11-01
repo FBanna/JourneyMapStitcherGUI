@@ -6,6 +6,8 @@ use image::{GenericImage, GenericImageView, ImageBuffer, Pixel, Primitive};
 use std::env;
 use turbojpeg;
 use std::fs::write;
+use image::imageops::FilterType;
+
 #[tauri::command]
 fn stitch(x1: f32, y1: f32, x2:f32, y2:f32, mut radius: f32, style: String){
     println!("stitch called with {} {} {} {}", x1, y1, x2, y2);
@@ -120,7 +122,7 @@ fn stitch(x1: f32, y1: f32, x2:f32, y2:f32, mut radius: f32, style: String){
 
 }
 
-
+#[tauri::command]
 fn get_tile(x: i32, y: i32) {
     println!("get_tile called with {} {}", x, y);
 
@@ -131,6 +133,9 @@ fn get_tile(x: i32, y: i32) {
     if path.exists() {
         println!("found tile {},{}.png", x, y);
         let tile = image::open(targetfile).unwrap();
+        let tile_scaled = tile.resize(256, 256, FilterType::Nearest);
+        let save: String = format!("tiles/{},{}.png", x, y);
+        tile_scaled.save(save).unwrap();
 
     }
 }
@@ -180,7 +185,7 @@ fn creation(startingx: i32, startingy: i32, width: i32, height: i32, out: String
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![stitch])
+        .invoke_handler(tauri::generate_handler![stitch, get_tile])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

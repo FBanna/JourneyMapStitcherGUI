@@ -10,7 +10,6 @@
       <label for="center" @click="type = 'center'"> center</label><br>
       <input type="radio" class="radios" name="type" value="span" v-model="type">
       <label for="span" @click="type = 'span'"> span</label><br><br>
-      {{ x1 }} {{ y1 }} {{ x2 }} {{ y2 }}
 
 
       <div v-if="type == 'center'">
@@ -58,6 +57,8 @@
       <button class="inputsButton" @click="goto">Goto</button>
       <br><br>
       <button class="inputsButton" @click="stitch">Stitch</button>
+      <br><br>
+      <button class="inputsButton" @click="get_tile">get tile TEST</button>
     </div>
 
   </div>
@@ -95,6 +96,7 @@
     map = leaflet.map('mapid').setView([x1.value, y2.value], 13);
     
     leaflet.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    //leaflet.tileLayer("./tiles/{x},{y}.png", {
       maxZoom: 19,
     }).addTo(map);
   })
@@ -106,6 +108,11 @@
   async function stitch(){
     console.log("stitch")
     await invoke("stitch", {x1: x1.value, y1: y1.value, x2: x2.value, y2: y2.value, radius: radius.value, style: type.value})
+  }
+
+  async function get_tile() {
+    console.log("get tile")
+    await invoke("get_tile", {x: x1.value, y: y1.value})
   }
 </script>
 
