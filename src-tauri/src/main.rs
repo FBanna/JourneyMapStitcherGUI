@@ -1,12 +1,41 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::path::Path;
-use image::{GenericImage, GenericImageView, ImageBuffer, Pixel, Primitive};
+use std::{path::Path as p, fs};
+use image::{GenericImage, GenericImageView, ImageBuffer, Pixel, Primitive, EncodableLayout, Rgba};
 use std::env;
 use turbojpeg;
 use std::fs::write;
 use image::imageops::FilterType;
+use std::fmt;
+use image::ImageFormat;
+
+use axum::{
+    routing::{get, post},
+    response::{AppendHeaders, IntoResponse},
+    Json, Router,
+    extract::State,
+    extract::Path,
+    http::{header, StatusCode}, body::StreamBody,
+
+};
+
+use serde::{Deserialize, Serialize};
+use std::net::SocketAddr;
+use futures_util::stream::{self, Stream};
+use std::sync::Arc;
+
+use tokio;
+
+use std::collections::HashMap;
+use tokio::task;
+use std::thread;
+use tokio_util;
+use std::io::{BufWriter, Cursor};
+
+use bytes::Bytes;
+
+use http_body::Full;
 
 #[tauri::command]
 fn stitch(x1: f32, y1: f32, x2:f32, y2:f32, mut radius: f32, style: String){
@@ -128,7 +157,7 @@ fn get_tile(x: i32, y: i32) {
 
     let targetfile: String = format!("day/{},{}.png", x, y);
 
-    let path = Path::new(&targetfile);
+    let path = p::new(&targetfile);
 
     if path.exists() {
         println!("found tile {},{}.png", x, y);
@@ -140,7 +169,7 @@ fn get_tile(x: i32, y: i32) {
     }
 }
 
-fn creation(startingx: i32, startingy: i32, width: i32, height: i32, out: String){
+async fn creation(startingx: i32, startingy: i32, width: i32, height: i32, out: String){
     // make image with width and height
 
     let mut x: i32;
@@ -154,15 +183,25 @@ fn creation(startingx: i32, startingy: i32, width: i32, height: i32, out: String
 
             x = xaxis + startingx;
             y = yaxis + startingy;
+            
 
             targetfile = format!("day/{},{}.png", x, y);
-            let path = Path::new(&targetfile);
+            let path = p::new(&targetfile);
 
             if path.exists() {
                 println!("{} exists!", targetfile);
 
                 let tempimg = image::open(targetfile).unwrap();
+                
                 imgbuf.copy_from(&tempimg, (xaxis*512) as u32, (yaxis*512) as u32);
+
+                //let tile_scaled = tempimg.resize(256, 256, FilterType::Nearest);
+                //let save: String = format!("./tiles/{}/{}.png", x, y);
+
+                //fs::create_dir(format!("./tiles/{}",x));
+
+                
+                //tile_scaled.save(save).unwrap();
 
             }
         }
@@ -180,12 +219,124 @@ fn creation(startingx: i32, startingy: i32, width: i32, height: i32, out: String
     let jpeg_data = turbojpeg::compress_image(&imgbuf, 100, turbojpeg::Subsamp::Sub2x2).unwrap();
 
     // write the JPEG to disk
-    std::fs::write("test.jpg", &jpeg_data);
+    std::fs::write(out, &jpeg_data);
 }
 
-fn main() {
+#[tokio::main]
+async fn server() {
+    tracing_subscriber::fmt::init();
+
+    // build our application with a route
+    let app = Router::new()
+        // `GET /` goes to `root`
+        .route("/:z/:x/:y", get(root));
+
+    // run our app with hyper
+    // `axum::Server` is a re-export of `hyper::Server`
+    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+    tracing::debug!("listening on {}", addr);
+    axum::Server::bind(&addr)
+        .serve(app.into_make_service())
+        .await
+        .unwrap();
+}
+
+// basic handler that responds with a static string
+async fn root(Path((z, x,y)): Path<(i32, i32, i32)>) ->  impl axum::response::IntoResponse {
+
+
+    let targetfile: String = format!("day/{},{}.png",x,y);
+    println!("{}",targetfile);
+
+    let path = p::new(&targetfile);
+
+    if path.exists() {
+        let tempimg = image::open(&targetfile).unwrap();
+
+        let tile_scaled = tempimg.resize(256, 256, FilterType::Nearest);
+
+        //let save: String = format!("./tiles/{}/{}.png", x, y);
+
+        //fs::create_dir(format!("./tiles/{}",x));
+
+        
+        //tile_scaled.save(save).unwrap();
+
+
+        //let mut buffer = BufWriter::new(Cursor::new(Vec::new()));
+
+        //tile_scaled.write_to(&mut buffer, ImageFormat::Png).unwrap();
+        //let bytes = tile_scaled.as_bytes();
+        let mut buffer = BufWriter::new(Cursor::new(Vec::new()));
+        tile_scaled.write_to(&mut buffer, ImageFormat::Png).unwrap();
+        let raw: Vec<u8> = buffer.into_inner().unwrap().into_inner();
+        
+
+        //let stream = ReaderStream::new(&*bytes);
+
+        // Convert stream to axum HTTP body
+        let bytes = Bytes::from(raw);
+        let body = Full::new(bytes);
+
+        // Headers
+        let headers = AppendHeaders([
+            (header::CONTENT_TYPE, "image/png"),
+            (header::CONTENT_DISPOSITION, "inline; filename=\"test.png\"")
+        ]);
+        
+        // Return
+        return(headers, body);
+
+    } else { //if no file exists
+
+        let mut imgbuf: ImageBuffer<Rgba<u8>, Vec<u8>> = image::ImageBuffer::new(256 as u32, 256 as u32);
+
+        let mut buffer = BufWriter::new(Cursor::new(Vec::new()));
+        imgbuf.write_to(&mut buffer, ImageFormat::Png).unwrap();
+        let raw: Vec<u8> = buffer.into_inner().unwrap().into_inner();
+        
+
+        //let stream = ReaderStream::new(&*bytes);
+
+        // Convert stream to axum HTTP body
+        let bytes = Bytes::from(raw);
+        let body = Full::new(bytes);
+
+        // Headers
+        let headers = AppendHeaders([
+            (header::CONTENT_TYPE, "image/png"),
+            (header::CONTENT_DISPOSITION, "inline; filename=\"test.png\"")
+        ]);
+        
+        // Return
+        return(headers, body);
+
+
+    }
+
+    
+
+
+
+
+
+    println!("file created");
+
+}
+
+
+#[tokio::main]
+async fn main() {
+
+    thread::spawn(move || {
+        server();
+        println!("server starting");
+    });
+
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![stitch, get_tile])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+
+    
 }

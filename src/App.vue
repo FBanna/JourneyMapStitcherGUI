@@ -95,8 +95,8 @@
     
     map = leaflet.map('mapid').setView([x1.value, y2.value], 13);
     
-    leaflet.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    //leaflet.tileLayer("./tiles/{x},{y}.png", {
+    //leaflet.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    leaflet.tileLayer("http://localhost:3000/{z}/{x}/{y}", {
       maxZoom: 19,
     }).addTo(map);
   })
