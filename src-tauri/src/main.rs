@@ -2,7 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use std::{path::Path as p, fs};
-use image::{GenericImage, GenericImageView, ImageBuffer, Pixel, Primitive, EncodableLayout, Rgba};
+use image::{GenericImage, GenericImageView, ImageBuffer, Pixel, Primitive, EncodableLayout, Rgba, DynamicImage};
 use std::env;
 use turbojpeg;
 use std::fs::write;
@@ -137,8 +137,11 @@ fn stitch(x1: f32, y1: f32, x2:f32, y2:f32, mut radius: f32, style: String){
     //println!("creating {} image/s,", neededx * neededy);
 
     for ximages in 0 .. neededx {
+
+        x = (ximages*imagesizex) + startxtile;
+
         for yimages in 0 .. neededy {
-            x = (ximages*imagesizex) + startxtile;
+            
             y = (yimages*imagesizey) + startytile;
 
             save = format!("out {},{}",ximages,yimages);
@@ -179,9 +182,12 @@ async fn creation(startingx: i32, startingy: i32, width: i32, height: i32, out: 
     let mut imgbuf = image::ImageBuffer::new((width*512) as u32,(height*512) as u32);
     //println!("{} {} {} {} {}", startingx*512, startingy*512, width*512, height*512, out);
     for xaxis in 0 .. width {
+
+        x = xaxis + startingx;
+
         for yaxis in 0 .. height {
 
-            x = xaxis + startingx;
+            
             y = yaxis + startingy;
             
 
@@ -245,48 +251,95 @@ async fn server() {
 async fn root(Path((z, x,y)): Path<(i32, i32, i32)>) ->  impl axum::response::IntoResponse {
 
 
-    let targetfile: String = format!("day/{},{}.png",x,y);
-    println!("{}",targetfile);
+    let checkfile: String = format!("day/{},{}.png",x,y);
+    println!("{}|{}", z, checkfile);
 
-    let path = p::new(&targetfile);
+    //let path = p::new(&checkfile);
 
-    if path.exists() {
-        let tempimg = image::open(&targetfile).unwrap();
+    //if path.exists() {
 
-        let tile_scaled = tempimg.resize(256, 256, FilterType::Nearest);
+    let mut currentx: i32;
+    let mut currenty: i32;
 
-        //let save: String = format!("./tiles/{}/{}.png", x, y);
+    
 
-        //fs::create_dir(format!("./tiles/{}",x));
+    let mut targetfile: String;
 
-        
-        //tile_scaled.save(save).unwrap();
+    let maxzoom: i32 = 20 + 1;
+    let imagedesity: i32 = maxzoom - z;
+    let onetilesize: i32 = (256.0/imagedesity as f32).floor() as i32;
+
+    let startingx: i32 = x * imagedesity;
+    let startingy: i32 = y * imagedesity;
 
 
-        //let mut buffer = BufWriter::new(Cursor::new(Vec::new()));
 
-        //tile_scaled.write_to(&mut buffer, ImageFormat::Png).unwrap();
-        //let bytes = tile_scaled.as_bytes();
-        let mut buffer = BufWriter::new(Cursor::new(Vec::new()));
-        tile_scaled.write_to(&mut buffer, ImageFormat::Png).unwrap();
-        let raw: Vec<u8> = buffer.into_inner().unwrap().into_inner();
-        
+    let mut imgbuf = image::ImageBuffer::new((512 * imagedesity) as u32,(512 * imagedesity) as u32);
+    
 
-        //let stream = ReaderStream::new(&*bytes);
 
-        // Convert stream to axum HTTP body
-        let bytes = Bytes::from(raw);
-        let body = Full::new(bytes);
 
-        // Headers
-        let headers = AppendHeaders([
-            (header::CONTENT_TYPE, "image/png"),
-            (header::CONTENT_DISPOSITION, "inline; filename=\"test.png\"")
-        ]);
-        
-        // Return
-        return(headers, body);
 
+    for xaxis in 0 .. imagedesity {
+
+        currentx = xaxis + startingx;
+
+        for yaxis in 0 .. imagedesity {
+
+            currenty = yaxis + startingy;
+            
+
+            targetfile = format!("day/{},{}.png", currentx, currenty);
+            let path = p::new(&targetfile);
+
+            if path.exists() {
+                //println!("{} exists!", targetfile);
+
+                let tempimg = image::open(targetfile).unwrap();
+                
+                
+                //println!("{}", onetilesize);
+                imgbuf.copy_from(&tempimg, (512*xaxis) as u32, (512*yaxis) as u32);
+
+
+                
+                
+                //let save: String = format!("./tiles/{}/{}.png", x, y);
+
+                //fs::create_dir(format!("./tiles/{}",x));
+
+                
+                //imgbuf.save(save).unwrap();
+
+            }
+        }
+    }
+    
+    //let tempimg = image::open(&checkfile).unwrap();
+
+    //let tile_scaled = tempimg.resize(256, 256, FilterType::Nearest);
+    let tile_scaled = &DynamicImage::ImageRgba8(imgbuf).resize(256, 256, FilterType::Nearest);
+
+    let mut buffer = BufWriter::new(Cursor::new(Vec::new()));
+
+    tile_scaled.write_to(&mut buffer, ImageFormat::Png).unwrap();
+
+    let raw: Vec<u8> = buffer.into_inner().unwrap().into_inner();
+
+    // Convert stream to axum HTTP body
+    let bytes = Bytes::from(raw);
+    let body = Full::new(bytes);
+
+    // Headers
+    let headers = AppendHeaders([
+        (header::CONTENT_TYPE, "image/png"),
+        (header::CONTENT_DISPOSITION, "inline; filename=\"test.png\"")
+    ]);
+    
+    // Return
+    
+    return(headers, body);
+    /*
     } else { //if no file exists
 
         let mut imgbuf: ImageBuffer<Rgba<u8>, Vec<u8>> = image::ImageBuffer::new(256 as u32, 256 as u32);
@@ -312,15 +365,7 @@ async fn root(Path((z, x,y)): Path<(i32, i32, i32)>) ->  impl axum::response::In
         return(headers, body);
 
 
-    }
-
-    
-
-
-
-
-
-    println!("file created");
+    }*/
 
 }
 
