@@ -38,7 +38,7 @@ use bytes::Bytes;
 use http_body::Full;
 
 #[tauri::command]
-fn stitch(x1: f32, y1: f32, x2:f32, y2:f32, mut radius: f32, style: String){
+async fn stitch(x1: f32, y1: f32, x2:f32, y2:f32, mut radius: f32, style: String){
     println!("stitch called with {} {} {} {}", x1, y1, x2, y2);
 
     let mut startxtile: i32 = 0;
@@ -136,40 +136,25 @@ fn stitch(x1: f32, y1: f32, x2:f32, y2:f32, mut radius: f32, style: String){
     //println!("{} {}", xsize, ysize);
     //println!("creating {} image/s,", neededx * neededy);
 
+    //println!("im HERE {} {}", neededx, neededy);
     for ximages in 0 .. neededx {
 
-        x = (ximages*imagesizex) + startxtile;
+        
 
         for yimages in 0 .. neededy {
             
+            x = (ximages*imagesizex) + startxtile;
             y = (yimages*imagesizey) + startytile;
 
-            save = format!("out {},{}",ximages,yimages);
+            save = format!("out {},{}.jpg",ximages,yimages);
             //println!("{}, {}, {}, {}, {}", x, y, imagesizex, imagesizey, save);
-            creation(x,y,imagesizex,imagesizey,save);
-            
+
+            creation(x,y,imagesizex,imagesizey,save).await;
+
         }
     }
 
 
-}
-
-#[tauri::command]
-fn get_tile(x: i32, y: i32) {
-    println!("get_tile called with {} {}", x, y);
-
-    let targetfile: String = format!("day/{},{}.png", x, y);
-
-    let path = p::new(&targetfile);
-
-    if path.exists() {
-        println!("found tile {},{}.png", x, y);
-        let tile = image::open(targetfile).unwrap();
-        let tile_scaled = tile.resize(256, 256, FilterType::Nearest);
-        let save: String = format!("tiles/{},{}.png", x, y);
-        tile_scaled.save(save).unwrap();
-
-    }
 }
 
 async fn creation(startingx: i32, startingy: i32, width: i32, height: i32, out: String){
@@ -180,7 +165,7 @@ async fn creation(startingx: i32, startingy: i32, width: i32, height: i32, out: 
     let mut targetfile: String;
 
     let mut imgbuf = image::ImageBuffer::new((width*512) as u32,(height*512) as u32);
-    //println!("{} {} {} {} {}", startingx*512, startingy*512, width*512, height*512, out);
+    println!("{} {} {} {} {}", startingx*512, startingy*512, width*512, height*512, out);
     for xaxis in 0 .. width {
 
         x = xaxis + startingx;
@@ -265,9 +250,10 @@ async fn root(Path((z, x,y)): Path<(i32, i32, i32)>) ->  impl axum::response::In
 
     let mut targetfile: String;
 
-    let maxzoom: i32 = 20 + 1;
-    let imagedesity: i32 = maxzoom - z;
-    let onetilesize: i32 = (256.0/imagedesity as f32).floor() as i32;
+    let maxzoom: i32 = 6;
+    let imagedesity: i32 = 2_i32.pow((maxzoom-z) as u32);
+ 
+    //let onetilesize: i32 = (256.0/imagedesity as f32).floor() as i32;
 
     let startingx: i32 = x * imagedesity;
     let startingy: i32 = y * imagedesity;
@@ -379,7 +365,7 @@ async fn main() {
     });
 
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![stitch, get_tile])
+        .invoke_handler(tauri::generate_handler![stitch])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 

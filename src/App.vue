@@ -57,8 +57,6 @@
       <button class="inputsButton" @click="goto">Goto</button>
       <br><br>
       <button class="inputsButton" @click="stitch">Stitch</button>
-      <br><br>
-      <button class="inputsButton" @click="get_tile">get tile TEST</button>
     </div>
 
   </div>
@@ -95,27 +93,23 @@
     
     map = leaflet.map('mapid', {
       crs: L.CRS.Simple
-    }).setView([x1.value, y2.value], 13);
+    }).setView([x1.value, y2.value], 2);
     
     //leaflet.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     leaflet.tileLayer("http://localhost:3000/{z}/{x}/{y}", {
-      maxZoom: 20,
+      maxZoom: 8,
+      maxNativeZoom: 6,
       noWrap: true
     }).addTo(map);
   })
 
   function goto(){
-    map.setView([x1.value,y1.value],13)
+    map.setView([x1.value,y1.value],3)
   }
 
   async function stitch(){
     console.log("stitch")
     await invoke("stitch", {x1: x1.value, y1: y1.value, x2: x2.value, y2: y2.value, radius: radius.value, style: type.value})
-  }
-
-  async function get_tile() {
-    console.log("get tile")
-    await invoke("get_tile", {x: x1.value, y: y1.value})
   }
 </script>
 
