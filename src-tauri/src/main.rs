@@ -220,7 +220,7 @@ async fn server() {
     // build our application with a route
     let app = Router::new()
         // `GET /` goes to `root`
-        .route("/:z/:x/:y", get(root));
+        .route("/:p/:z/:x/:y", get(root));
 
     // run our app with hyper
     // `axum::Server` is a re-export of `hyper::Server`
@@ -233,10 +233,10 @@ async fn server() {
 }
 
 // basic handler that responds with a static string
-async fn root(Path((z, x,y)): Path<(i32, i32, i32)>) ->  impl axum::response::IntoResponse {
+async fn root(Path((dim , z, x,y)): Path<(String, i32, i32, i32)>) ->  impl axum::response::IntoResponse {
 
 
-    let checkfile: String = format!("day/{},{}.png",x,y);
+    let checkfile: String = format!("/{}/day/{},{}.png",dim,x,y);
     println!("{}|{}", z, checkfile);
 
     //let path = p::new(&checkfile);
@@ -275,7 +275,8 @@ async fn root(Path((z, x,y)): Path<(i32, i32, i32)>) ->  impl axum::response::In
             currenty = yaxis + startingy;
             
 
-            targetfile = format!("day/{},{}.png", currentx, currenty);
+            targetfile = format!("{}/day/{},{}.png", dim, currentx, currenty);
+            //println!("{}", targetfile);
             let path = p::new(&targetfile);
 
             if path.exists() {

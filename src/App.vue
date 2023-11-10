@@ -2,14 +2,23 @@
 
   <div id="mapid" class="map"></div>
 
-
+  
   <div class="inputsBorder">
+  
     <div class="inputs">
-
+      
       <input type="radio" class="radios" name="type" value="center" v-model="type">
       <label for="center" @click="type = 'center'"> center</label><br>
       <input type="radio" class="radios" name="type" value="span" v-model="type">
       <label for="span" @click="type = 'span'"> span</label><br><br>
+
+
+      <label for="dim" >Enter dimension:</label><br>
+      <select @change="changeUrl" class="inputsForm" name="dim" v-model="dim">
+        <option value="/DIM0/">Overworld</option>
+        <option value="/DIM-1/">Nether</option>
+        <option value="/DIM1/">End</option>
+      </select>
 
 
       <div v-if="type == 'center'">
@@ -26,6 +35,7 @@
         </div>
 
       </div>
+      {{ dim }}
 
       <div v-if="type == 'span'">
 
@@ -89,6 +99,10 @@
   var x2 = ref(0)
   var y2 = ref(0)
 
+  var dim = ref("/DIM0/")
+  var url;
+  var tileUrl;
+
   onMounted(() => {
     
     map = leaflet.map('mapid', {
@@ -96,7 +110,8 @@
     }).setView([x1.value, y2.value], 2);
     
     //leaflet.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    leaflet.tileLayer("http://localhost:3000/{z}/{x}/{y}", {
+    tileUrl = L.tileLayer("http://localhost:3000/DIM-1/{z}/{x}/{y}", {
+    //leaflet.tileLayer(url.value, {
       maxZoom: 8,
       maxNativeZoom: 6,
       noWrap: true
@@ -110,6 +125,12 @@
   async function stitch(){
     console.log("stitch")
     await invoke("stitch", {x1: x1.value, y1: y1.value, x2: x2.value, y2: y2.value, radius: radius.value, style: type.value})
+  }
+
+  function changeUrl() {
+    url = "http://localhost:3000" + dim.value + "{z}/{x}/{y}"
+    console.log(url)
+    tileUrl.setUrl(url)
   }
 </script>
 
