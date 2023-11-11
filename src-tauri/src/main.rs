@@ -38,7 +38,7 @@ use bytes::Bytes;
 use http_body::Full;
 
 #[tauri::command]
-async fn stitch(x1: f32, y1: f32, x2:f32, y2:f32, mut radius: f32, style: String){
+async fn stitch(x1: f32, y1: f32, x2:f32, y2:f32, mut radius: f32, style: String, dimension: String){
     println!("stitch called with {} {} {} {}", x1, y1, x2, y2);
 
     let mut startxtile: i32 = 0;
@@ -149,7 +149,7 @@ async fn stitch(x1: f32, y1: f32, x2:f32, y2:f32, mut radius: f32, style: String
             save = format!("out {},{}.jpg",ximages,yimages);
             //println!("{}, {}, {}, {}, {}", x, y, imagesizex, imagesizey, save);
 
-            creation(x,y,imagesizex,imagesizey,save).await;
+            creation(x,y,imagesizex,imagesizey,save, dimension.clone()).await;
 
         }
     }
@@ -157,7 +157,7 @@ async fn stitch(x1: f32, y1: f32, x2:f32, y2:f32, mut radius: f32, style: String
 
 }
 
-async fn creation(startingx: i32, startingy: i32, width: i32, height: i32, out: String){
+async fn creation(startingx: i32, startingy: i32, width: i32, height: i32, out: String, dimension: String){
     // make image with width and height
 
     let mut x: i32;
@@ -176,11 +176,11 @@ async fn creation(startingx: i32, startingy: i32, width: i32, height: i32, out: 
             y = yaxis + startingy;
             
 
-            targetfile = format!("day/{},{}.png", x, y);
+            targetfile = format!("{}/day/{},{}.png", dimension, x, y);
             let path = p::new(&targetfile);
 
             if path.exists() {
-                println!("{} exists!", targetfile);
+                //println!("{} exists!", targetfile);
 
                 let tempimg = image::open(targetfile).unwrap();
                 

@@ -13,20 +13,19 @@
       <label for="span" @click="type = 'span'"> span</label><br><br>
 
 
-      <label for="dim" >Enter dimension:</label><br>
-      <select @change="changeUrl" class="inputsForm" name="dim" v-model="dim">
-        <option value="/DIM0/">Overworld</option>
-        <option value="/DIM-1/">Nether</option>
-        <option value="/DIM1/">End</option>
-      </select>
-
+      <label for="dimension" >Enter dimension:</label><br>
+      <select @change="changeUrl" class="inputsForm" name="dimension" v-model="dimension">
+        <option value="overworld">Overworld</option>
+        <option value="the_nether">Nether</option>
+        <option value="the_end">End</option>
+      </select><br><br>
 
       <div v-if="type == 'center'">
         <label for="x">Enter X coord:</label><br>
         <input class="inputsForm" type="number" name="x" v-model="x1"><br><br>
 
-        <label for="y">Enter Y coord:</label><br>
-        <input class="inputsForm" type="number" name="y" v-model="y1"><br><br>
+        <label for="z">Enter Z coord:</label><br>
+        <input class="inputsForm" type="number" name="z" v-model="z1"><br><br>
 
         <label for="radius">Enter radius:</label><br>
         <input class="inputsForm" type="number" name="radius" max="65024" v-model="radius"><br><br>
@@ -35,21 +34,20 @@
         </div>
 
       </div>
-      {{ dim }}
 
       <div v-if="type == 'span'">
 
         <label for="x1">Enter X coord 1:</label><br>
         <input class="inputsForm" type="number" name="x1" v-model="x1"><br><br>
 
-        <label for="y1">Enter Y coord 1:</label><br>
-        <input class="inputsForm" type="number" name="y1" v-model="y1"><br><br>
+        <label for="z1">Enter Z coord 1:</label><br>
+        <input class="inputsForm" type="number" name="z1" v-model="z1"><br><br>
 
         <label for="x2">Enter X coord 2:</label><br>
         <input class="inputsForm" type="number" name="x2" v-model="x2"><br><br>
 
-        <label for="y2">Enter Y coord 2:</label><br>
-        <input class="inputsForm" type="number" name="y2" v-model="y2"><br><br>
+        <label for="z2">Enter Z coord 2:</label><br>
+        <input class="inputsForm" type="number" name="z2" v-model="z2"><br><br>
 
       </div>
 
@@ -94,12 +92,12 @@
   //var x1 = ref(51.505) //stating x y values also used for span and used as x y for center
   //var y1 = ref(-0.09)
   var x1 = ref(0) //stating x y values also used for span and used as x y for center
-  var y1 = ref(0)
+  var z1 = ref(0)
 
   var x2 = ref(0)
-  var y2 = ref(0)
+  var z2 = ref(0)
 
-  var dim = ref("/DIM0/")
+  var dimension = ref("overworld")
   var url;
   var tileUrl;
 
@@ -107,10 +105,10 @@
     
     map = leaflet.map('mapid', {
       crs: L.CRS.Simple
-    }).setView([x1.value, y2.value], 2);
+    }).setView([x1.value, z2.value], 2);
     
     //leaflet.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    tileUrl = L.tileLayer("http://localhost:3000/DIM-1/{z}/{x}/{y}", {
+    tileUrl = L.tileLayer("http://localhost:3000/overworld/{z}/{x}/{y}", {
     //leaflet.tileLayer(url.value, {
       maxZoom: 8,
       maxNativeZoom: 6,
@@ -119,16 +117,19 @@
   })
 
   function goto(){
-    map.setView([x1.value,y1.value],3)
+    //map.setZoom(6)
+    //var coords = L.latLng(0,0)
+    map.setView(L.latLng((-z1.value/128),(x1.value/128)), 6)
+    //map.panTo(L.latLng((x1.value/go.value),(y1.value/go.value)), 6)
   }
 
   async function stitch(){
     console.log("stitch")
-    await invoke("stitch", {x1: x1.value, y1: y1.value, x2: x2.value, y2: y2.value, radius: radius.value, style: type.value})
+    await invoke("stitch", {x1: x1.value, y1: z1.value, x2: x2.value, y2: z2.value, radius: radius.value, style: type.value, dimension: dimension.value})
   }
 
   function changeUrl() {
-    url = "http://localhost:3000" + dim.value + "{z}/{x}/{y}"
+    url = "http://localhost:3000/" + dimension.value + "/{z}/{x}/{y}"
     console.log(url)
     tileUrl.setUrl(url)
   }
