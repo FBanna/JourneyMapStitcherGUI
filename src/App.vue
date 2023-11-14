@@ -1,6 +1,6 @@
 <template>
 
-  <div id="mapid" class="map"></div>
+  <div id="mapid" class="map" v-on:click.ctrl="box"></div>
 
   
   <div class="inputsBorder">
@@ -97,6 +97,8 @@
   var x2 = ref(0)
   var z2 = ref(0)
 
+  var lat, lng;
+
   var dimension = ref("overworld")
   var url;
   var tileUrl;
@@ -114,6 +116,13 @@
       maxNativeZoom: 6,
       noWrap: true
     }).addTo(map);
+
+    
+
+    map.addEventListener('mousemove', function(ev) {
+      lat = ev.latlng.lat;
+      lng = ev.latlng.lng;
+    });
   })
 
   function goto(){
@@ -132,6 +141,10 @@
     url = "http://localhost:3000/" + dimension.value + "/{z}/{x}/{y}"
     console.log(url)
     tileUrl.setUrl(url)
+  }
+
+  function box() {
+    console.log(lat, lng)
   }
 </script>
 
