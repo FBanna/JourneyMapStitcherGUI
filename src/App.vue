@@ -82,6 +82,10 @@
   import { ref, computed, onMounted } from 'vue'
   import leaflet from "leaflet";
   import { invoke } from '@tauri-apps/api';
+
+  import { appWindow } from '@tauri-apps/api/window';
+
+
   //import { invoke } from '@tauri-apps/api' 
   //import { convertFileSrc } from '@tauri-apps/api/tauri';
   //import { homeDir, join} from '@tauri-apps/api/path';
@@ -192,6 +196,13 @@
     
 
   })
+
+
+
+
+  //const progress = await invoke('do_some_long_task', {    
+  //    window: appWindow
+  //});
 
 </script>
 

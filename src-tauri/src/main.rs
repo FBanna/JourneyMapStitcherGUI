@@ -37,6 +37,34 @@ use bytes::Bytes;
 
 use http_body::Full;
 
+
+
+
+/*
+
+https://betterprogramming.pub/front-end-back-end-communication-in-tauri-implementing-progress-bars-and-interrupt-buttons-2a4efd967059
+
+
+use tauri::Window;
+
+#[derive(Clone, serde::Serialize)]
+struct Payload {
+    pct: f64,
+}
+
+#[tauri::command]
+pub async fn do_some_long_task(window: Window){
+  let mut pct = 0.0;
+  loop {
+      // computations ...
+      window.emit("PROGRESS", Payload { pct }).unwrap();
+  }
+}
+ */
+
+
+
+
 #[tauri::command]
 async fn stitch(x1: f32, y1: f32, x2:f32, y2:f32, mut radius: f32, style: String, dimension: String){
     println!("stitch called with {} {} {} {}", x1, y1, x2, y2);
