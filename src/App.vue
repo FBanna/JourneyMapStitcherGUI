@@ -1,6 +1,6 @@
 <template>
 
-  <div id="mapid" class="map" v-on:click.ctrl="box"></div>
+  <div id="mapid" class="map" v-on:mousedown.ctrl="boxStart" ></div>
 
   
   <div class="inputsBorder">
@@ -20,6 +20,7 @@
         <option value="the_end">End</option>
       </select><br><br>
 
+      {{ ifCtrl }}
       <div v-if="type == 'center'">
         <label for="x">Enter X coord:</label><br>
         <input class="inputsForm" type="number" name="x" v-model="x1"><br><br>
@@ -103,6 +104,11 @@
   var url;
   var tileUrl;
 
+  var ifCtrl = ref(0)
+
+  var marker;
+  var selection;
+
   onMounted(() => {
     
     map = leaflet.map('mapid', {
@@ -143,9 +149,50 @@
     tileUrl.setUrl(url)
   }
 
-  function box() {
-    console.log(lat, lng)
+  function boxStart() {
+    ifCtrl.value = 1
+
+    x1.value = lat
+    z1.value = lng
+
+    console.log(lat, lng, x1.value, z1.value)
+
+    map.dragging.disable()
+    
+    
+    
+    marker = new L.Marker([lat, lng]);
+    map.addLayer(marker);
+
+    map.removeLayer(selection)
+
+  
   }
+
+  document.addEventListener("mouseup",() => {
+
+    if (ifCtrl.value == 1) {
+      ifCtrl.value = 0
+      x2.value = lat
+      z2.value = lng
+
+      console.log(lat, lng, x2.value, z2.value)
+      map.dragging.enable()
+
+
+
+      map.removeLayer(marker)
+
+      var bounds = [[x1.value,z1.value],[x2.value,z2.value]]
+      //var bounds = [[2.5, 56], [6.7,8.7]]
+      console.log(L.toString(bounds))
+      selection = new L.rectangle(bounds, {color: "#ff7800", weight: 1})
+      map.addLayer(selection)
+      }
+    
+
+  })
+
 </script>
 
 
@@ -161,6 +208,7 @@
     right: 0px;
     border: 0px;
     padding: 0px;
+    user-select: none;
   }
 
 
