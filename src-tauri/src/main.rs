@@ -82,8 +82,8 @@ async fn stitch(x1: f32, y1: f32, x2:f32, y2:f32, mut radius: f32, style: String
     let mut targetfile: String;
 
     if style == "span"{
-        xsize = ((x1-x2)/512.0).round();
-        ysize = ((y1-y2)/512.0).round();
+        xsize = ((x1-x2)/512.0).round().abs();
+        ysize = ((y1-y2)/512.0).round().abs();
         
 
         

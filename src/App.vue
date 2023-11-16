@@ -20,7 +20,6 @@
         <option value="the_end">End</option>
       </select><br><br>
 
-      {{ ifCtrl }}
       <div v-if="type == 'center'">
         <label for="x">Enter X coord:</label><br>
         <input class="inputsForm" type="number" name="x" v-model="x1"><br><br>
@@ -154,10 +153,11 @@
   }
 
   function boxStart() {
+
     ifCtrl.value = 1
 
-    x1.value = lat
-    z1.value = lng
+    x1.value = lng*128
+    z1.value = -lat*128
 
     console.log(lat, lng, x1.value, z1.value)
 
@@ -177,8 +177,8 @@
 
     if (ifCtrl.value == 1) {
       ifCtrl.value = 0
-      x2.value = lat
-      z2.value = lng
+      x2.value = lng*128
+      z2.value = -lat*128
 
       console.log(lat, lng, x2.value, z2.value)
       map.dragging.enable()
@@ -187,9 +187,9 @@
 
       map.removeLayer(marker)
 
-      var bounds = [[x1.value,z1.value],[x2.value,z2.value]]
+      var bounds = [[-z1.value/128,x1.value/128],[-z2.value/128,x2.value/128]]
       //var bounds = [[2.5, 56], [6.7,8.7]]
-      console.log(L.toString(bounds))
+      console.log(bounds)
       selection = new L.rectangle(bounds, {color: "#ff7800", weight: 1})
       map.addLayer(selection)
       }
