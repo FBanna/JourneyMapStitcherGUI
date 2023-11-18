@@ -1,6 +1,13 @@
 <template>
 
-  <div id="mapid" class="map" v-on:mousedown.ctrl="boxStart" ></div>
+  
+
+  <div id="mapid" class="map" v-on:mousedown.ctrl="boxStart"></div>
+  <div class="position">
+    X: {{ (lng*128).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",") }}<br>
+    Z: {{ (-lat*128).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",") }}
+  </div>
+  
 
   
   <div class="inputsBorder">
@@ -65,6 +72,8 @@
       <button class="inputsButton" @click="goto">Goto</button>
       <br><br>
       <button class="inputsButton" @click="stitch">Stitch</button>
+      <br><br>
+      <button class="inputsButton" @click="select_world">Stitch</button>
     </div>
 
   </div>
@@ -101,7 +110,8 @@
   var x2 = ref(0)
   var z2 = ref(0)
 
-  var lat, lng;
+  var lat = ref(0)
+  var lng = ref(0)
 
   var dimension = ref("overworld")
   var url;
@@ -129,15 +139,17 @@
     
 
     map.addEventListener('mousemove', function(ev) {
-      lat = ev.latlng.lat;
-      lng = ev.latlng.lng;
+      lat.value = ev.latlng.lat;
+      lng.value = ev.latlng.lng;
     });
   })
 
   function goto(){
     //map.setZoom(6)
     //var coords = L.latLng(0,0)
-    map.setView(L.latLng((-z1.value/128),(x1.value/128)), 6)
+    lat.value = -z1.value/128
+    lng.value = x1.value/128
+    map.setView(L.latLng(lat.value,lng.value), 6)
     //map.panTo(L.latLng((x1.value/go.value),(y1.value/go.value)), 6)
   }
 
@@ -156,16 +168,16 @@
 
     ifCtrl.value = 1
 
-    x1.value = lng*128
-    z1.value = -lat*128
+    x1.value = lng.value*128
+    z1.value = -lat.value*128
 
-    console.log(lat, lng, x1.value, z1.value)
+    console.log(lat.value, lng.value, x1.value, z1.value)
 
     map.dragging.disable()
     
     
     
-    marker = new L.Marker([lat, lng]);
+    marker = new L.Marker([lat.value, lng.value]);
     map.addLayer(marker);
 
     map.removeLayer(selection)
@@ -173,14 +185,18 @@
   
   }
 
+  async function select_world() {
+    await invoke("select_world")
+  }
+
   document.addEventListener("mouseup",() => {
 
     if (ifCtrl.value == 1) {
       ifCtrl.value = 0
-      x2.value = lng*128
-      z2.value = -lat*128
+      x2.value = lng.value*128
+      z2.value = -lat.value*128
 
-      console.log(lat, lng, x2.value, z2.value)
+      console.log(lat.value, lng.value, x2.value, z2.value)
       map.dragging.enable()
 
 
@@ -208,6 +224,7 @@
 
 
 <style>
+
   .leaflet-control-attribution.leaflet-control {
     display: none;
   }
@@ -219,6 +236,18 @@
     right: 0px;
     border: 0px;
     padding: 0px;
+    user-select: none;
+  }
+
+  .position {
+    font-family: Verdana, sans-serif;
+    background-color: #ae00ff;
+    left: 0px;
+    bottom: 0px;
+    width: 100px;
+    height: 40px;
+    position: absolute;
+    z-index: 400;
     user-select: none;
   }
 

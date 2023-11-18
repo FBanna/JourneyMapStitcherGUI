@@ -354,34 +354,22 @@ async fn root(Path((dim , z, x,y)): Path<(String, i32, i32, i32)>) ->  impl axum
     // Return
     
     return(headers, body);
-    /*
-    } else { //if no file exists
 
-        let mut imgbuf: ImageBuffer<Rgba<u8>, Vec<u8>> = image::ImageBuffer::new(256 as u32, 256 as u32);
+}
 
-        let mut buffer = BufWriter::new(Cursor::new(Vec::new()));
-        imgbuf.write_to(&mut buffer, ImageFormat::Png).unwrap();
-        let raw: Vec<u8> = buffer.into_inner().unwrap().into_inner();
+#[tauri::command]
+fn select_world() {
+    tauri::Builder::default().setup(|app| {
+        let local_window = tauri::WindowBuilder::new(
+            app,
+            "test",
+            tauri::WindowUrl::App("select.html".into())
+            ).build()?;
+            Ok(())
+        })
+        .run(tauri::generate_context!())
+        .expect("error while running app");
         
-
-        //let stream = ReaderStream::new(&*bytes);
-
-        // Convert stream to axum HTTP body
-        let bytes = Bytes::from(raw);
-        let body = Full::new(bytes);
-
-        // Headers
-        let headers = AppendHeaders([
-            (header::CONTENT_TYPE, "image/png"),
-            (header::CONTENT_DISPOSITION, "inline; filename=\"test.png\"")
-        ]);
-        
-        // Return
-        return(headers, body);
-
-
-    }*/
-
 }
 
 
@@ -394,7 +382,7 @@ async fn main() {
     });
 
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![stitch])
+        .invoke_handler(tauri::generate_handler![stitch, select_world])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 
