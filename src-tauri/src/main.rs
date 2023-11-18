@@ -363,7 +363,7 @@ fn select_world() {
         let local_window = tauri::WindowBuilder::new(
             app,
             "test",
-            tauri::WindowUrl::App("select.html".into())
+            tauri::WindowUrl::App("select_world.html".into())
             ).build()?;
             Ok(())
         })
