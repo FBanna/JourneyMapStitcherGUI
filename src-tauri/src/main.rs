@@ -362,9 +362,9 @@ fn select_world() {
     tauri::Builder::default().setup(|app| {
         let local_window = tauri::WindowBuilder::new(
             app,
-            "test",
-            tauri::WindowUrl::App("select_world.html".into())
-            ).build()?;
+            "local",
+            tauri::WindowUrl::App("select_world/index.html".into())
+            ).build();
             Ok(())
         })
         .run(tauri::generate_context!())

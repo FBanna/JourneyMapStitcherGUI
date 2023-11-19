@@ -1,10 +1,24 @@
+import {resolve} from 'path'
 import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
 
+const root = resolve(__dirname, 'src')
+const outDir = resolve(__dirname, 'dist')
 // https://vitejs.dev/config/
 export default defineConfig(async () => ({
+  root,
   plugins: [vue()],
 
+  build: {
+    outDir,
+    emptyOutDir: true,
+    rollupOptions: {
+      input: {
+        main: resolve(root, 'index.html'),
+        select_world: resolve(root, 'select_world', 'index.html'),
+      }
+    }
+  },
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
   //
   // 1. prevent vite from obscuring rust errors
