@@ -12,7 +12,7 @@
     import { WebviewWindow, LogicalSize, PhysicalSize  } from '@tauri-apps/api/window'
     import { appWindow } from '@tauri-apps/api/window';
 
-    appWindow.setTitle("hello")
+    //appWindow.setTitle("hello")
 
 
 </script>

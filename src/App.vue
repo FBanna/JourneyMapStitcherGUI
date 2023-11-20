@@ -90,7 +90,7 @@
   import { ref, computed, onMounted } from 'vue'
   import leaflet from "leaflet";
   import { invoke } from '@tauri-apps/api';
-  import { WebviewWindow, LogicalSize, PhysicalSize, title  } from '@tauri-apps/api/window'
+  //import { WebviewWindow, LogicalSize, PhysicalSize, title  } from '@tauri-apps/api/window'
   import { appWindow } from '@tauri-apps/api/window';
 
 
@@ -187,24 +187,9 @@
   }
 
   async function select_world() {
-    const webview = new WebviewWindow('select_world', {
-      url: 'select_world/index.html',
-    })
-    
-    
 
-
-    webview.once('tauri://created', function () {
-    // webview window successfully created
-      console.log("created successfully")
-    });
-
-    webview.once('tauri://error', function (e) {
-    // an error happened creating the webview window
-      console.log("created unsuccessfully", e)
-    });
-
-    
+    invoke("select_world")
+ 
   }
 
   document.addEventListener("mouseup",() => {

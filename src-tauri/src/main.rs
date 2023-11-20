@@ -358,18 +358,12 @@ async fn root(Path((dim , z, x,y)): Path<(String, i32, i32, i32)>) ->  impl axum
 }
 
 #[tauri::command]
-fn select_world() {
-    tauri::Builder::default().setup(|app| {
-        let local_window = tauri::WindowBuilder::new(
-            app,
-            "local",
-            tauri::WindowUrl::App("select_world/index.html".into())
-            ).build();
-            Ok(())
-        })
-        .run(tauri::generate_context!())
-        .expect("error while running app");
-        
+async fn select_world(app: tauri::AppHandle) {
+
+    let _ = tauri::WindowBuilder::new(&app, "select_world", tauri::WindowUrl::App("select_world/index.html".into()))
+        .title("Select your world")
+        .inner_size(1023.0, 456.0)
+        .build();
 }
 
 
