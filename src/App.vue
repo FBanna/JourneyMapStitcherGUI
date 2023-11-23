@@ -188,7 +188,7 @@
 
   async function select_world() {
 
-    invoke("select_world")
+    invoke("select_world_window")
  
   }
 
@@ -267,6 +267,11 @@
     font-family: Verdana, sans-serif;
   }
 
+  .inputsButton:hover{
+    background-color: #01AFE4;
+  }
+
+
   .radios[type="radio"]{
     -webkit-appearance: none;
     appearance: none;
@@ -297,10 +302,7 @@
     width: 180px;
   }
 
-  .inputsButton:hover{
-    background-color: #01AFE4;
-  }
-
+  
   .inputs{
     position: absolute;
     right: 20px;

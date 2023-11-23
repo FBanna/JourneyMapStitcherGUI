@@ -28,6 +28,7 @@ tokio-util = "0.7.10"
 futures-util = "0.3.29"
 bytes = "1.5.0"
 http-body = "0.4.5"
+directories = "5.0.1"
 
 
 [features]

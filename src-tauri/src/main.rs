@@ -1,6 +1,7 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod get_world;
 use std::{path::Path as p, fs};
 use image::{GenericImage, GenericImageView, ImageBuffer, Pixel, Primitive, EncodableLayout, Rgba, DynamicImage};
 use std::env;
@@ -358,7 +359,7 @@ async fn root(Path((dim , z, x,y)): Path<(String, i32, i32, i32)>) ->  impl axum
 }
 
 #[tauri::command]
-async fn select_world(app: tauri::AppHandle) {
+async fn select_world_window(app: tauri::AppHandle) {
 
     let _ = tauri::WindowBuilder::new(&app, "select_world", tauri::WindowUrl::App("select_world/index.html".into()))
         .title("Select your world")
@@ -366,6 +367,27 @@ async fn select_world(app: tauri::AppHandle) {
         .build();
 }
 
+#[tauri::command]
+fn get_world() -> (Vec<String>, Vec<String>){
+    let mut MC_multi_player: Vec<String> = Vec::new();
+    let mut MC_single_player: Vec<String> = Vec::new();
+
+
+    let (MC_multi_player_path, MC_single_player_path ) = get_world::mc_data();
+
+    for item in &MC_multi_player_path {
+        MC_multi_player.push(item.file_name().unwrap().to_str().unwrap().to_string());
+        println!("mp item: {}", item.file_name().unwrap().to_str().unwrap().to_string());
+    }
+
+    for item in &MC_single_player_path {
+        MC_single_player.push(item.file_name().unwrap().to_str().unwrap().to_string());
+        println!("mp item: {}", item.file_name().unwrap().to_str().unwrap().to_string());
+    }
+
+    return (MC_multi_player, MC_single_player);
+
+}
 
 #[tokio::main]
 async fn main() {
@@ -376,7 +398,7 @@ async fn main() {
     });
 
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![stitch, select_world])
+        .invoke_handler(tauri::generate_handler![stitch, select_world_window, get_world])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 
