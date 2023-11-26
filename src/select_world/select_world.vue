@@ -1,19 +1,31 @@
 <template>
     <div class="launcher">
-        <li>Vanilla Launcher</li>
-        <li class="world_type" @click="MC_multi_player_show = !MC_multi_player_show">MP</li>
-        <li class="world" v-if="MC_multi_player_show" v-for="(item, index) in MC_multi_player">
-            <div class="items" @click="select(index)">{{ item }}</div>
+        <li :class="{if_selected: check_grand_child_selected('MC')}">Vanilla Launcher</li>
+
+        <li class="world_type" :class="{if_selected: check_child_selected('MC', 'mp')}" @click="MC_multi_player_show = !MC_multi_player_show">MP</li>
+
+        <li class="world" :class="{if_selected: check_selected('MC', 'mp', index)}" @click="selected = ['MC', 'mp', index]" 
+        v-if="MC_multi_player_show" v-for="(item, index) in MC_multi_player">
+
+            {{ item.substring(item.lastIndexOf('\\')+1, item.length) }}
+
         </li>
-        <li class="world_type" @click="MC_single_player_show = !MC_single_player_show">SP</li>
-        <li class="world" v-if="MC_single_player_show" v-for="item in MC_single_player">
-            <div class="items">{{ item }}</div>
+
+        <li class="world_type" :class="{if_selected: check_child_selected('MC', 'sp')}" @click="MC_single_player_show = !MC_single_player_show">SP</li>
+
+        <li class="world" :class="{if_selected: check_selected('MC', 'sp', index)}" @click="selected = ['MC', 'sp', index]" 
+        v-if="MC_single_player_show" v-for="(item, index) in MC_single_player">
+
+            {{ item.substring(item.lastIndexOf('\\')+1, item.length) }}
+
         </li>
+
     </div>
 
     <div class="buttons">
         <button class="inputsButton" @click="get_worlds">Refresh</button>
     </div>
+
     
 
 </template>
@@ -24,11 +36,22 @@
 <script setup>
     import { ref, computed, onMounted } from 'vue'
     import leaflet from "leaflet";
-    import { invoke } from '@tauri-apps/api';
+    import { event, invoke } from '@tauri-apps/api';
     import { WebviewWindow, LogicalSize, PhysicalSize  } from '@tauri-apps/api/window'
+    import { window } from "@tauri-apps/api"
+    import { TauriEvent, emit } from "@tauri-apps/api/event"
     import { appWindow } from '@tauri-apps/api/window';
 
-    //appWindow.setTitle("hello")
+    window.getCurrent().listen(TauriEvent.WINDOW_CLOSE_REQUESTED, () => {
+        console.log("clicked")
+        //changeUrl()
+        appWindow.close()
+    
+        
+    });
+
+    var selected = ref(["vanilla", "mp", 0])
+
     var MC_multi_player = ref()
     var MC_single_player = ref()
 
@@ -41,10 +64,35 @@
         [MC_multi_player.value, MC_single_player.value] = await invoke("get_world")
     }
 
-    function select(index) {
-        console.log(index)
+    function check_selected(launcher, type, index) {
+        if(JSON.stringify(selected.value) == JSON.stringify([launcher,type,index])) {
+            return true
+        } else {
+            return false
+        }
     }
 
+    function check_child_selected(launcher, type) {
+        if(JSON.stringify([selected.value[0], selected.value[1]]) == JSON.stringify([launcher, type])){
+            return true
+        } else {
+            return false
+        }
+    }
+
+    function check_grand_child_selected(launcher) {
+        if( selected.value[0] == launcher){
+            return true
+        } else {
+            return false
+        }
+    }
+
+    function get_path() {
+        
+    }
+
+    
 
 </script>
     
@@ -88,5 +136,8 @@
     }
     .items {
         position: relative;
+    }
+    .if_selected {
+        color: rgb(11, 219, 11);
     }
 </style>

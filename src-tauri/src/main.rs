@@ -2,7 +2,12 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod get_world;
-use std::{path::Path as p, fs};
+
+use std::path::Path;
+use std::path::PathBuf;
+
+use axum::extract::path;
+use futures_util::lock;
 use image::{GenericImage, GenericImageView, ImageBuffer, Pixel, Primitive, EncodableLayout, Rgba, DynamicImage};
 use std::env;
 use turbojpeg;
@@ -16,7 +21,7 @@ use axum::{
     response::{AppendHeaders, IntoResponse},
     Json, Router,
     extract::State,
-    extract::Path,
+    extract::Path as axumPath,
     http::{header, StatusCode}, body::StreamBody,
 
 };
@@ -24,7 +29,6 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
 use futures_util::stream::{self, Stream};
-use std::sync::Arc;
 
 use tokio;
 
@@ -33,6 +37,7 @@ use tokio::task;
 use std::thread;
 use tokio_util;
 use std::io::{BufWriter, Cursor};
+use std::sync::{Arc, Mutex};
 
 use bytes::Bytes;
 
@@ -206,7 +211,7 @@ async fn creation(startingx: i32, startingy: i32, width: i32, height: i32, out: 
             
 
             targetfile = format!("{}/day/{},{}.png", dimension, x, y);
-            let path = p::new(&targetfile);
+            let path = Path::new(&targetfile);
 
             if path.exists() {
                 //println!("{} exists!", targetfile);
@@ -242,31 +247,44 @@ async fn creation(startingx: i32, startingy: i32, width: i32, height: i32, out: 
     std::fs::write(out, &jpeg_data);
 }
 
-#[tokio::main]
-async fn server() {
-    tracing_subscriber::fmt::init();
+#[derive(Clone)]
+struct AppState {path: Arc<Mutex<PathBuf>>}
 
+#[tokio::main]
+async fn server(path: Arc<Mutex<PathBuf>>) {
+    
+
+    let state = AppState {path};
+    tracing_subscriber::fmt::init();
+    
+    
     // build our application with a route
     let app = Router::new()
         // `GET /` goes to `root`
-        .route("/:p/:z/:x/:y", get(root));
+        .route("/:p/:z/:x/:y", get(root))
+        .with_state(state);
 
     // run our app with hyper
     // `axum::Server` is a re-export of `hyper::Server`
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
-    tracing::debug!("listening on {}", addr);
+    println!("listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .await
         .unwrap();
 }
 
-// basic handler that responds with a static string
-async fn root(Path((dim , z, x,y)): Path<(String, i32, i32, i32)>) ->  impl axum::response::IntoResponse {
 
+async fn root(State(state): State<AppState>, axumPath((dim , z, x,y)): axumPath<(String, i32, i32, i32)>) ->  impl axum::response::IntoResponse {
+    
+    let mut locked_path = state.path.lock().expect("mutex was poisoned");
+    println!("{}", locked_path.file_name().unwrap().to_str().unwrap().to_string());
+    drop(locked_path);
 
     let checkfile: String = format!("/{}/day/{},{}.png",dim,x,y);
+
     println!("{}|{}", z, checkfile);
+    
 
     //let path = p::new(&checkfile);
 
@@ -306,7 +324,7 @@ async fn root(Path((dim , z, x,y)): Path<(String, i32, i32, i32)>) ->  impl axum
 
             targetfile = format!("{}/day/{},{}.png", dim, currentx, currenty);
             //println!("{}", targetfile);
-            let path = p::new(&targetfile);
+            let path = Path::new(&targetfile);
 
             if path.exists() {
                 //println!("{} exists!", targetfile);
@@ -368,13 +386,13 @@ async fn select_world_window(app: tauri::AppHandle) {
 }
 
 #[tauri::command]
-fn get_world() -> (Vec<String>, Vec<String>){
-    let mut MC_multi_player: Vec<String> = Vec::new();
-    let mut MC_single_player: Vec<String> = Vec::new();
+fn get_world() -> (Vec<PathBuf>, Vec<PathBuf>){
+    //let mut MC_multi_player: Vec<String> = Vec::new();
+    //let mut MC_single_player: Vec<String> = Vec::new();
 
 
     let (MC_multi_player_path, MC_single_player_path ) = get_world::mc_data();
-
+    /*
     for item in &MC_multi_player_path {
         MC_multi_player.push(item.file_name().unwrap().to_str().unwrap().to_string());
         println!("mp item: {}", item.file_name().unwrap().to_str().unwrap().to_string());
@@ -384,17 +402,24 @@ fn get_world() -> (Vec<String>, Vec<String>){
         MC_single_player.push(item.file_name().unwrap().to_str().unwrap().to_string());
         println!("mp item: {}", item.file_name().unwrap().to_str().unwrap().to_string());
     }
+    */
 
-    return (MC_multi_player, MC_single_player);
+    //return (MC_multi_player, MC_single_player);
+    return (MC_multi_player_path, MC_single_player_path);
 
 }
 
 #[tokio::main]
 async fn main() {
+    let mut temppath = PathBuf::new();
+    temppath.push("hello\\bye");
+    let path_original: Arc<Mutex<PathBuf>> = Arc::new(Mutex::new(temppath));
+
+    let path = path_original.clone();
 
     thread::spawn(move || {
-        server();
         println!("server starting");
+        server(path);  
     });
 
     tauri::Builder::default()

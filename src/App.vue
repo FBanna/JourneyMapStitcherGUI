@@ -7,6 +7,8 @@
     X: {{ (lng*128).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",") }}<br>
     Z: {{ (-lat*128).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",") }}
   </div>
+
+  
   
 
   
@@ -65,7 +67,7 @@
 
 
 
-
+      
     </div>
 
     <div class="calls">
@@ -73,14 +75,11 @@
       <br><br>
       <button class="inputsButton" @click="stitch">Stitch</button>
       <br><br>
-      <button class="inputsButton" @click="select_world">Stitch</button>
+      <button class="inputsButton" @click="select_world_window">Stitch</button>
     </div>
 
   </div>
 
-
-
-  
 </template>
 
 
@@ -165,6 +164,13 @@
     tileUrl.setUrl(url)
   }
 
+  /*export const changeUrl = () => {
+    //path.value = new_path
+    url = path.value + dimension.value + "/{z}/{x}/{y}"
+    console.log(url)
+    tileUrl.setUrl(url)
+  }*/
+
   function boxStart() {
 
     ifCtrl.value = 1
@@ -186,7 +192,7 @@
   
   }
 
-  async function select_world() {
+  async function select_world_window() {
 
     invoke("select_world_window")
  

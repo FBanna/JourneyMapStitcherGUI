@@ -22,7 +22,7 @@ pub fn mc_data() -> (Vec<PathBuf>, Vec<PathBuf>) {
 
     if let Some(data_dir) = BaseDirs::new() {
 
-        let multi_player_path = &data_dir.data_dir().join(".minecraft/journeymap/data/mp");
+        let multi_player_path = &data_dir.data_dir().join(".minecraft\\journeymap\\data\\mp");
 
         if multi_player_path.exists() {
             let paths = fs::read_dir(multi_player_path).unwrap();
@@ -42,7 +42,7 @@ pub fn mc_data() -> (Vec<PathBuf>, Vec<PathBuf>) {
 
     if let Some(data_dir) = BaseDirs::new() {
 
-        let single_player_path = &data_dir.data_dir().join(".minecraft/journeymap/data/sp");
+        let single_player_path = &data_dir.data_dir().join(".minecraft\\journeymap\\data\\sp");
 
         if single_player_path.exists() {
             let paths = fs::read_dir(single_player_path).unwrap();
@@ -59,6 +59,8 @@ pub fn mc_data() -> (Vec<PathBuf>, Vec<PathBuf>) {
             
         }
     }
+
+
     
     return(multi_player, single_player)
 }
