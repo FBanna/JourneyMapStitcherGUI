@@ -14,6 +14,8 @@ use std::{fs, path::PathBuf};
 use std::path::Path;
 use directories::{BaseDirs, UserDirs, ProjectDirs};
 use tauri::api::path::data_dir;
+use std::fs::File;
+use std::io::prelude::*;
 
 
 pub fn mc_data() -> (Vec<PathBuf>, Vec<PathBuf>) {
@@ -63,4 +65,30 @@ pub fn mc_data() -> (Vec<PathBuf>, Vec<PathBuf>) {
 
     
     return(multi_player, single_player)
+}
+
+
+pub fn get_last_world() -> (PathBuf){
+    let mut path: PathBuf;
+
+    let file_path = Path::new("worldSave.txt");
+    let display = file_path.display();
+
+    // Open the path in read-only mode, returns `io::Result<File>`
+    let mut file = match File::open(&file_path) {
+        Err(why) => panic!("couldn't open {}: {}", display, why),
+        Ok(file) => file,
+    };
+
+    // Read the file contents into a string, returns `io::Result<usize>`
+    let mut s = String::new();
+    match file.read_to_string(&mut s) {
+        Err(why) => panic!("couldn't read {}: {}", display, why),
+        Ok(_) => print!("{} contains:\n{}", display, s),
+    }
+
+
+
+
+    return path;
 }

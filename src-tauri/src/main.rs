@@ -248,8 +248,7 @@ async fn creation(startingx: i32, startingy: i32, width: i32, height: i32, out: 
     std::fs::write(out, &jpeg_data);
 }
 
-#[derive(Clone)]
-struct AppState {path: Arc<Mutex<PathBuf>>}
+
 
 #[tokio::main]
 async fn server(path: Arc<Mutex<PathBuf>>) {
@@ -278,7 +277,13 @@ async fn server(path: Arc<Mutex<PathBuf>>) {
 
 async fn root(State(state): State<AppState>, axumPath((dim , z, x,y)): axumPath<(String, i32, i32, i32)>) ->  impl axum::response::IntoResponse {
     
-    let mut locked_path = state.path.lock().expect("mutex was poisoned");
+    //let mut locked_path = state.path.lock().expect("mutex was poisoned");
+    //println!("{}", locked_path.file_name().unwrap().to_str().unwrap().to_string());
+    //drop(locked_path);
+
+    let mut locked_path = state.path.lock().expect("POISONED");
+    //*counter = *counter + 1;
+
     println!("{}", locked_path.file_name().unwrap().to_str().unwrap().to_string());
     drop(locked_path);
 
@@ -385,20 +390,24 @@ async fn select_world_window(app: tauri::AppHandle) {
         .inner_size(1023.0, 456.0)
         .build();
 }
-pub struct Storage {
-    store: Mutex<i32>
-}
+
 #[tauri::command]
-fn get_world(storage: TauriState<Storage>) -> (Vec<PathBuf>, Vec<PathBuf>){
+fn get_world(tauriPath: TauriState<CurrentPath>) -> (Vec<PathBuf>, Vec<PathBuf>){
     //let mut MC_multi_player: Vec<String> = Vec::new();
     //let mut MC_single_player: Vec<String> = Vec::new();
 
     
-    let mut counter = storage.store.lock().unwrap();
+    /*let mut counter = tauriPath.path.lock().expect("POISONED");
     *counter = *counter + 1;
 
     println!("{}", *counter);
-    drop(counter);
+    drop(counter);*/
+
+    let mut locked_path = tauriPath.path.lock().expect("POISONED");
+    //*counter = *counter + 1;
+
+    println!("{}", locked_path.file_name().unwrap().to_str().unwrap().to_string());
+    drop(locked_path);
 
     let (MC_multi_player_path, MC_single_player_path ) = get_world::mc_data();
     /*
@@ -421,21 +430,34 @@ fn get_world(storage: TauriState<Storage>) -> (Vec<PathBuf>, Vec<PathBuf>){
 
 
 
+pub struct CurrentPath {
+    path: Arc<Mutex<PathBuf>>
+}
+
+#[derive(Clone)]
+struct AppState {
+    path: Arc<Mutex<PathBuf>>
+}
+
 #[tokio::main]
 async fn main() {
-    let mut temppath = PathBuf::new();
-    temppath.push("hello\\bye");
+    let mut temppath = get_world::get_last_world();
+    //temppath.push("hello\\bye");
+
+
+
     let path_original: Arc<Mutex<PathBuf>> = Arc::new(Mutex::new(temppath));
 
-    let path = path_original.clone();
+    let pathServer = path_original.clone();
+    let pathChange = path_original.clone();
 
     thread::spawn(move || {
         println!("server starting");
-        server(path);  
+        server(pathServer);  
     });
 
     tauri::Builder::default()
-        .manage(Storage { store: Mutex::new(0) })
+        .manage(CurrentPath { path: pathChange })
         .invoke_handler(tauri::generate_handler![stitch, select_world_window, get_world])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
