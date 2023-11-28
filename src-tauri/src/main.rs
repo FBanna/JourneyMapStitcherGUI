@@ -12,6 +12,7 @@ use image::{GenericImage, GenericImageView, ImageBuffer, Pixel, Primitive, Encod
 use std::env;
 use turbojpeg;
 use std::fs::write;
+use tauri::State as TauriState;
 use image::imageops::FilterType;
 use std::fmt;
 use image::ImageFormat;
@@ -384,12 +385,20 @@ async fn select_world_window(app: tauri::AppHandle) {
         .inner_size(1023.0, 456.0)
         .build();
 }
-
+pub struct Storage {
+    store: Mutex<i32>
+}
 #[tauri::command]
-fn get_world() -> (Vec<PathBuf>, Vec<PathBuf>){
+fn get_world(storage: TauriState<Storage>) -> (Vec<PathBuf>, Vec<PathBuf>){
     //let mut MC_multi_player: Vec<String> = Vec::new();
     //let mut MC_single_player: Vec<String> = Vec::new();
 
+    
+    let mut counter = storage.store.lock().unwrap();
+    *counter = *counter + 1;
+
+    println!("{}", *counter);
+    drop(counter);
 
     let (MC_multi_player_path, MC_single_player_path ) = get_world::mc_data();
     /*
@@ -409,6 +418,9 @@ fn get_world() -> (Vec<PathBuf>, Vec<PathBuf>){
 
 }
 
+
+
+
 #[tokio::main]
 async fn main() {
     let mut temppath = PathBuf::new();
@@ -423,6 +435,7 @@ async fn main() {
     });
 
     tauri::Builder::default()
+        .manage(Storage { store: Mutex::new(0) })
         .invoke_handler(tauri::generate_handler![stitch, select_world_window, get_world])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
