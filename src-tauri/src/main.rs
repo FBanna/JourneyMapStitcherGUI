@@ -284,11 +284,11 @@ async fn root(State(state): State<AppState>, axumPath((dim , z, x,y)): axumPath<
     let mut locked_path = state.path.lock().expect("POISONED");
     //*counter = *counter + 1;
 
-    println!("{}", locked_path.file_name().unwrap().to_str().unwrap().to_string());
-    
-    let checkfile: String = format!("{}/{}/day/{},{}.png",locked_path,dim,x,y);
+    //println!("{}", locked_path.file_name().unwrap().to_str().unwrap().to_string());
+    let path_to_world: PathBuf = PathBuf::from(locked_path.file_name().unwrap());
+    //let checkfile: String = format!("{}/{}/day/{},{}.png",locked_path.file_name().unwrap().to_str().unwrap().to_string(),dim,x,y);
     drop(locked_path);
-    println!("{}|{}", z, checkfile);
+    //println!("{}|{}", z, checkfile);
     
 
     //let path = p::new(&checkfile);
@@ -300,7 +300,7 @@ async fn root(State(state): State<AppState>, axumPath((dim , z, x,y)): axumPath<
 
     
 
-    let mut targetfile: String;
+    let mut targetfile: PathBuf;
 
     let maxzoom: i32 = 6;
     let imagedesity: i32 = 2_i32.pow((maxzoom-z) as u32);
@@ -327,11 +327,13 @@ async fn root(State(state): State<AppState>, axumPath((dim , z, x,y)): axumPath<
             currenty = yaxis + startingy;
             
 
-            targetfile = format!("{}/day/{},{}.png", dim, currentx, currenty);
-            //println!("{}", targetfile);
-            let path = Path::new(&targetfile);
+            //targetfile = format!("{}/day/{},{}.png", dim, currentx, currenty);
+            targetfile = [&path_to_world, &PathBuf::from(format!("{}\\day\\{},{}.png", dim,currentx, currenty))].iter().collect();
+            //targetfile = PathBuf::from(format!("{}\\{}\\day\\{},{}.png", path_to_world, dim, currentx, currenty));
+            println!("{}", targetfile.file_name().unwrap().to_str().unwrap().to_string());
+            //let path = Path::new(&targetfile);
 
-            if path.exists() {
+            if targetfile.exists() {
                 //println!("{} exists!", targetfile);
 
                 let tempimg = image::open(targetfile).unwrap();
@@ -441,7 +443,7 @@ struct AppState {
 #[tokio::main]
 async fn main() {
     
-    get_world::store_last_world(PathBuf::from("\\"));
+    get_world::store_last_world(PathBuf::from(r"C:\Users\Findlay\Desktop\My stuff\Coding\vue.js\Journey-Map-Stitcher-GUI\src-tauri"));
     let mut temppath = get_world::get_last_world();
     //temppath.push("hello\\bye");
 
