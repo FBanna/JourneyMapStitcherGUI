@@ -75,7 +75,6 @@ pub fn get_last_world() -> (PathBuf){
 
     let file_path = Path::new("worldSave.txt");
 
-    //;
     let mut path_string: String = String::from("");
     match File::open(file_path) {
        Ok(file) => path_string = fs::read_to_string(file_path).expect("Unable to read file"),
@@ -90,6 +89,11 @@ pub fn get_last_world() -> (PathBuf){
     return path_to_world;
 }
 
-pub fn store_last_world() {
+pub fn store_last_world(path_to_write: PathBuf) {
+    let file_path = Path::new("worldSave.txt");
+
+
+    let encoded = paths_as_strings::encode_path(&path_to_write);
+    fs::write(file_path, encoded.as_bytes()).expect("Unable to write file");
 
 }

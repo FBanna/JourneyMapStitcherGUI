@@ -285,10 +285,9 @@ async fn root(State(state): State<AppState>, axumPath((dim , z, x,y)): axumPath<
     //*counter = *counter + 1;
 
     println!("{}", locked_path.file_name().unwrap().to_str().unwrap().to_string());
+    
+    let checkfile: String = format!("{}/{}/day/{},{}.png",locked_path,dim,x,y);
     drop(locked_path);
-
-    let checkfile: String = format!("/{}/day/{},{}.png",dim,x,y);
-
     println!("{}|{}", z, checkfile);
     
 
@@ -441,6 +440,8 @@ struct AppState {
 
 #[tokio::main]
 async fn main() {
+    
+    get_world::store_last_world(PathBuf::from("\\"));
     let mut temppath = get_world::get_last_world();
     //temppath.push("hello\\bye");
 
