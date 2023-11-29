@@ -16,6 +16,8 @@ use directories::{BaseDirs, UserDirs, ProjectDirs};
 use tauri::api::path::data_dir;
 use std::fs::File;
 use std::io::prelude::*;
+use std::borrow::Cow;
+use paths_as_strings;
 
 
 pub fn mc_data() -> (Vec<PathBuf>, Vec<PathBuf>) {
@@ -69,26 +71,25 @@ pub fn mc_data() -> (Vec<PathBuf>, Vec<PathBuf>) {
 
 
 pub fn get_last_world() -> (PathBuf){
-    let mut path: PathBuf;
+    let mut path_to_world: PathBuf = PathBuf::new();
 
     let file_path = Path::new("worldSave.txt");
-    let display = file_path.display();
 
-    // Open the path in read-only mode, returns `io::Result<File>`
-    let mut file = match File::open(&file_path) {
-        Err(why) => panic!("couldn't open {}: {}", display, why),
-        Ok(file) => file,
+    //;
+    let mut path_string: String = String::from("");
+    match File::open(file_path) {
+       Ok(file) => path_string = fs::read_to_string(file_path).expect("Unable to read file"),
+       Err(error) => println!("unable to open file {}\n{}",file_path.display(),error),
     };
 
-    // Read the file contents into a string, returns `io::Result<usize>`
-    let mut s = String::new();
-    match file.read_to_string(&mut s) {
-        Err(why) => panic!("couldn't read {}: {}", display, why),
-        Ok(_) => print!("{} contains:\n{}", display, s),
-    }
+    path_to_world = paths_as_strings::decode_path(&path_string).unwrap();
 
 
 
 
-    return path;
+    return path_to_world;
+}
+
+pub fn store_last_world() {
+
 }

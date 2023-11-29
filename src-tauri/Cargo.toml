@@ -29,6 +29,7 @@ futures-util = "0.3.29"
 bytes = "1.5.0"
 http-body = "0.4.5"
 directories = "5.0.1"
+paths-as-strings = "0.1.1"
 
 
 [features]
