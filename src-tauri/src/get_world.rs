@@ -4,6 +4,8 @@
 
 // MC, Prism, Multi MC
 
+// CHECK current Dir
+
 
 
 // Journey map data
@@ -20,54 +22,92 @@ use std::borrow::Cow;
 use paths_as_strings;
 
 
-pub fn mc_data() -> (Vec<PathBuf>, Vec<PathBuf>) {
-    let mut multi_player: Vec<PathBuf> = Vec::new();
-    let mut single_player: Vec<PathBuf> = Vec::new();
-
-    if let Some(data_dir) = BaseDirs::new() {
-
-        let multi_player_path = &data_dir.data_dir().join(".minecraft\\journeymap\\data\\mp");
-
-        if multi_player_path.exists() {
-            let paths = fs::read_dir(multi_player_path).unwrap();
-
-            for path in paths {
-                
-                multi_player.push(path.unwrap().path().clone());
-
-            }
-
-        } else {
-
-            println!("does not exist!")
-
-        }
-    }
-
-    if let Some(data_dir) = BaseDirs::new() {
-
-        let single_player_path = &data_dir.data_dir().join(".minecraft\\journeymap\\data\\sp");
-
-        if single_player_path.exists() {
-            let paths = fs::read_dir(single_player_path).unwrap();
-
-            for path in paths {
-                
-                single_player.push(path.unwrap().path().clone());
-
-            }
-
-        } else {
-
-            println!("does not exist!")
-            
-        }
-    }
+pub fn mc_data() -> (Vec<PathBuf>, Vec<PathBuf>, Vec<PathBuf>, Vec<PathBuf>) {
+    //let mut multi_player: Vec<PathBuf> = Vec::new();
+    //let mut single_player: Vec<PathBuf> = Vec::new();
 
 
-    
-    return(multi_player, single_player)
+    let MC_multi_player: Vec<PathBuf> = data_dir_search(PathBuf::from(".minecraft\\journeymap\\data\\mp"));
+    let MC_single_player: Vec<PathBuf> = data_dir_search(PathBuf::from(".minecraft\\journeymap\\data\\sp"));
+
+    let Prism_multi_player: Vec<PathBuf> = data_instance_search(PathBuf::from("PrismLauncher\\instances"), PathBuf::from("mp"));
+    let Prism_single_player: Vec<PathBuf> = data_instance_search(PathBuf::from("PrismLauncher\\instances"), PathBuf::from("sp"));
+
+    //println!("{:?}", Prism_multi_player);
+    //println!("\n\n{:?}", Prism_single_player);
+    return(MC_multi_player, MC_single_player, Prism_multi_player, Prism_single_player)
 }
+
+
+fn data_dir_search(path_to_dir: PathBuf) -> Vec<PathBuf> {
+
+    let mut paths_found: Vec<PathBuf> = Vec::new();
+
+    if let Some(data_dir) = BaseDirs::new() {
+
+        let full_path = &data_dir.data_dir().join(path_to_dir);
+
+        if full_path.exists() {
+            let paths = fs::read_dir(full_path).unwrap();
+
+            for path in paths {
+                
+                paths_found.push(path.unwrap().path().clone());
+
+            }
+
+        } else {
+
+            println!("MC not installed!")
+
+        }
+    }
+
+    return(paths_found)
+
+}
+
+fn data_instance_search(path_to_dir: PathBuf, world_type: PathBuf) -> Vec<PathBuf> {
+
+    let mut paths_found: Vec<PathBuf> = Vec::new();
+
+    if let Some(data_dir) = BaseDirs::new() {
+
+        let full_path = &data_dir.data_dir().join(path_to_dir);
+
+        if full_path.exists() {
+            
+            let paths = fs::read_dir(full_path).unwrap();
+
+            for path in paths {
+                
+                if path.as_ref().unwrap().path().is_dir() == true {
+
+                    let check_journey: PathBuf = [path.as_ref().unwrap().path(), PathBuf::from(".minecraft\\journeymap\\data"), world_type.clone()].iter().collect();
+
+                    if check_journey.exists(){
+                        let instance_paths = fs::read_dir(check_journey).unwrap();
+
+                        for world in instance_paths {
+                            paths_found.push(world.unwrap().path().clone());
+                        }
+                    }
+
+
+                }
+            }
+
+        } else {
+
+            println!("Prism not installed!")
+
+        }
+    }
+
+    return(paths_found);
+
+}
+
 
 
 pub fn get_last_world() -> (PathBuf){
@@ -89,11 +129,3 @@ pub fn get_last_world() -> (PathBuf){
     return path_to_world;
 }
 
-pub fn store_last_world(path_to_write: PathBuf) {
-    let file_path = Path::new("worldSave.txt");
-
-
-    let encoded = paths_as_strings::encode_path(&path_to_write);
-    fs::write(file_path, encoded.as_bytes()).expect("Unable to write file");
-
-}

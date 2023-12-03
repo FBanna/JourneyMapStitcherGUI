@@ -44,6 +44,8 @@ use bytes::Bytes;
 
 use http_body::Full;
 
+use std::fs;
+
 
 
 
@@ -251,10 +253,10 @@ async fn creation(startingx: i32, startingy: i32, width: i32, height: i32, out: 
 
 
 #[tokio::main]
-async fn server(path: Arc<Mutex<PathBuf>>) {
+async fn server(stateholder: Arc<Mutex<PathBuf>>) {
     
 
-    let state = AppState {path};
+    let state = AppState {stateholder};
     tracing_subscriber::fmt::init();
     
     
@@ -281,11 +283,12 @@ async fn root(State(state): State<AppState>, axumPath((dim , z, x,y)): axumPath<
     //println!("{}", locked_path.file_name().unwrap().to_str().unwrap().to_string());
     //drop(locked_path);
 
-    let mut locked_path = state.path.lock().expect("POISONED");
+    let locked_path = state.stateholder.lock().expect("POISONED");
     //*counter = *counter + 1;
 
     //println!("{}", locked_path.file_name().unwrap().to_str().unwrap().to_string());
-    let path_to_world: PathBuf = PathBuf::from(locked_path.file_name().unwrap());
+    let path_to_world = &locked_path.clone();
+    //println!("{}", path_to_world.to_str().unwrap().to_string());
     //let checkfile: String = format!("{}/{}/day/{},{}.png",locked_path.file_name().unwrap().to_str().unwrap().to_string(),dim,x,y);
     drop(locked_path);
     //println!("{}|{}", z, checkfile);
@@ -328,9 +331,9 @@ async fn root(State(state): State<AppState>, axumPath((dim , z, x,y)): axumPath<
             
 
             //targetfile = format!("{}/day/{},{}.png", dim, currentx, currenty);
-            targetfile = [&path_to_world, &PathBuf::from(format!("{}\\day\\{},{}.png", dim,currentx, currenty))].iter().collect();
-            //targetfile = PathBuf::from(format!("{}\\{}\\day\\{},{}.png", path_to_world, dim, currentx, currenty));
-            println!("{}", targetfile.file_name().unwrap().to_str().unwrap().to_string());
+            targetfile = [path_to_world, &PathBuf::from(format!(r".\{}\day\{},{}.png", dim,currentx, currenty))].iter().collect();
+            //targetfile = PathBuf::from(format!("\\{}\\day\\{},{}.png", dim, currentx, currenty));
+            //println!("{}", targetfile.to_str().unwrap().to_string());
             //let path = Path::new(&targetfile);
 
             if targetfile.exists() {
@@ -393,64 +396,112 @@ async fn select_world_window(app: tauri::AppHandle) {
 }
 
 #[tauri::command]
-fn get_world(tauriPath: TauriState<CurrentPath>) -> (Vec<PathBuf>, Vec<PathBuf>){
-    //let mut MC_multi_player: Vec<String> = Vec::new();
-    //let mut MC_single_player: Vec<String> = Vec::new();
+fn get_world(tauriNewPath: TauriState<NewPath>) -> (Vec<PathBuf>, Vec<PathBuf>, Vec<PathBuf>, Vec<PathBuf>){
+
+    let (MC_multi_player_path, MC_single_player_path ,
+         Prism_multi_player_path, Prism_single_player_path) = get_world::mc_data();
 
     
-    /*let mut counter = tauriPath.path.lock().expect("POISONED");
-    *counter = *counter + 1;
+    // MC multi player //
+    let mut locked_MC_multi_player_path = tauriNewPath.MC_multi_player.lock().expect("POISONED");
+    *locked_MC_multi_player_path = MC_multi_player_path.clone();
+    drop(locked_MC_multi_player_path);
+    
+    // MC single Player //
+    let mut locked_MC_single_player_path = tauriNewPath.MC_single_player.lock().expect("POISONED");
+    *locked_MC_single_player_path = MC_single_player_path.clone();
+    drop(locked_MC_single_player_path);
+    
 
-    println!("{}", *counter);
-    drop(counter);*/
+    // Prism multi Player //
+    let mut locked_Prism_multi_player_path = tauriNewPath.Prism_multi_player.lock().expect("POISONED");
+    *locked_Prism_multi_player_path = Prism_multi_player_path.clone();
+    drop(locked_Prism_multi_player_path);
+    
+    // Prism single Player //
+    let mut locked_Prism_single_player_path = tauriNewPath.Prism_single_player.lock().expect("POISONED");
+    *locked_Prism_single_player_path = Prism_single_player_path.clone();
+    drop(locked_Prism_single_player_path);
 
-    let mut locked_path = tauriPath.path.lock().expect("POISONED");
-    //*counter = *counter + 1;
-
-    println!("{}", locked_path.file_name().unwrap().to_str().unwrap().to_string());
-    drop(locked_path);
-
-    let (MC_multi_player_path, MC_single_player_path ) = get_world::mc_data();
-    /*
-    for item in &MC_multi_player_path {
-        MC_multi_player.push(item.file_name().unwrap().to_str().unwrap().to_string());
-        println!("mp item: {}", item.file_name().unwrap().to_str().unwrap().to_string());
-    }
-
-    for item in &MC_single_player_path {
-        MC_single_player.push(item.file_name().unwrap().to_str().unwrap().to_string());
-        println!("mp item: {}", item.file_name().unwrap().to_str().unwrap().to_string());
-    }
-    */
-
-    //return (MC_multi_player, MC_single_player);
-    return (MC_multi_player_path, MC_single_player_path);
+    return (MC_multi_player_path, MC_single_player_path, Prism_multi_player_path, Prism_single_player_path);
 
 }
 
+#[tauri::command]
+fn set_world(launcher: String, serverType: String, index: usize, tauriCurrentPath: TauriState<CurrentPath>, tauriNewPath: TauriState<NewPath>) {
+
+    let mut locked_path = tauriCurrentPath.path.lock().expect("POISONED");
+
+    if launcher == "MC" {
+        if serverType == "mp"{
+            
+            let mut locked_MC_multi_player_path = tauriNewPath.MC_multi_player.lock().expect("POISONED");
+            *locked_path = locked_MC_multi_player_path[index].clone();
+            
+        } else {
+
+            let mut locked_MC_single_player_path = tauriNewPath.MC_single_player.lock().expect("POISONED");
+            *locked_path = locked_MC_single_player_path[index].clone();
+        }
+    } else if launcher == "Prism" {
+        if serverType == "mp"{
+            
+            let mut locked_Prism_multi_player_path = tauriNewPath.Prism_multi_player.lock().expect("POISONED");
+            *locked_path = locked_Prism_multi_player_path[index].clone();
+            
+        } else {
+
+            let mut locked_Prism_single_player_path = tauriNewPath.Prism_single_player.lock().expect("POISONED");
+            *locked_path = locked_Prism_single_player_path[index].clone();
+        }
+    }
+
+}
+
+#[tauri::command]
+fn store_last_world(tauriPath: TauriState<CurrentPath>) {
+    let file_path = Path::new("worldSave.txt");
+
+    let mut locked_path = tauriPath.path.lock().expect("POISONED");
 
 
+    let encoded = paths_as_strings::encode_path(&*locked_path);
+    fs::write(file_path, encoded.as_bytes()).expect("Unable to write file");
 
-pub struct CurrentPath {
+    drop(locked_path);
+}
+
+
+struct CurrentPath {
     path: Arc<Mutex<PathBuf>>
+}
+
+struct NewPath {
+    MC_multi_player: Arc<Mutex<Vec<PathBuf>>>,
+    MC_single_player: Arc<Mutex<Vec<PathBuf>>>,
+    Prism_multi_player: Arc<Mutex<Vec<PathBuf>>>,
+    Prism_single_player: Arc<Mutex<Vec<PathBuf>>>,
 }
 
 #[derive(Clone)]
 struct AppState {
-    path: Arc<Mutex<PathBuf>>
+    stateholder: Arc<Mutex<PathBuf>>
 }
+
+
+
 
 #[tokio::main]
 async fn main() {
     
-    get_world::store_last_world(PathBuf::from(r"C:\Users\Findlay\Desktop\My stuff\Coding\vue.js\Journey-Map-Stitcher-GUI\src-tauri"));
+    //get_world::store_last_world(PathBuf::from(r"C:\Users\Findlay\AppData\Roaming\PrismLauncher\instances\1.20.1\.minecraft\journeymap\data\mp\2B2T"));
     let mut temppath = get_world::get_last_world();
     //temppath.push("hello\\bye");
 
 
 
     let path_original: Arc<Mutex<PathBuf>> = Arc::new(Mutex::new(temppath));
-
+ 
     let pathServer = path_original.clone();
     let pathChange = path_original.clone();
 
@@ -461,7 +512,10 @@ async fn main() {
 
     tauri::Builder::default()
         .manage(CurrentPath { path: pathChange })
-        .invoke_handler(tauri::generate_handler![stitch, select_world_window, get_world])
+        .manage(NewPath {MC_multi_player: Arc::new(Mutex::new(Vec::new())), MC_single_player: Arc::new(Mutex::new(Vec::new())), 
+            Prism_multi_player: Arc::new(Mutex::new(Vec::new())), Prism_single_player: Arc::new(Mutex::new(Vec::new()))})
+
+        .invoke_handler(tauri::generate_handler![stitch, select_world_window, get_world, set_world, store_last_world])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 

@@ -20,11 +20,39 @@
 
         </li>
 
+
+        <li :class="{if_selected: check_grand_child_selected('Prism')}">Prism Launcher</li>
+
+        <li class="world_type" :class="{if_selected: check_child_selected('Prism', 'mp')}" @click="Prism_multi_player_show = !Prism_multi_player_show">MP</li>
+
+        <li class="world" :class="{if_selected: check_selected('Prism', 'mp', index)}" @click="selected = ['Prism', 'mp', index]" 
+        v-if="Prism_multi_player_show" v-for="(item, index) in Prism_multi_player">
+
+            {{ item.substring(item.lastIndexOf('\\')+1, item.length) }}
+
+        </li>
+
+        <li class="world_type" :class="{if_selected: check_child_selected('Prism', 'sp')}" @click="Prism_single_player_show = !Prism_single_player_show">SP</li>
+
+        <li class="world" :class="{if_selected: check_selected('Prism', 'sp', index)}" @click="selected = ['Prism', 'sp', index]" 
+        v-if="Prism_single_player_show" v-for="(item, index) in Prism_single_player">
+
+            {{ item.substring(item.lastIndexOf('\\')+1, item.length) }}
+
+        </li>
+
     </div>
 
-    <div class="buttons">
+
+    <div class="refresh">
         <button class="inputsButton" @click="get_worlds">Refresh</button>
     </div>
+
+    <div class="select">
+        <button class="inputsButton" @click="set_world">Select</button>
+    </div>
+
+    {{ selected }}
 
     
 
@@ -44,24 +72,30 @@
 
     window.getCurrent().listen(TauriEvent.WINDOW_CLOSE_REQUESTED, () => {
         console.log("clicked")
-        //changeUrl()
+        invoke("store_last_world")
         appWindow.close()
     
         
     });
 
-    var selected = ref(["vanilla", "mp", 0])
+    var selected = ref(["launcher", "type", 0])
 
     var MC_multi_player = ref()
     var MC_single_player = ref()
+    var Prism_multi_player = ref()
+    var Prism_single_player = ref()
+
 
     var MC_multi_player_show = ref(true)
     var MC_single_player_show = ref(true)
+    var Prism_multi_player_show = ref(true)
+    var Prism_single_player_show = ref(true)
 
     get_worlds()
     
     async function get_worlds() {
-        [MC_multi_player.value, MC_single_player.value] = await invoke("get_world")
+        [MC_multi_player.value, MC_single_player.value, 
+        Prism_multi_player.value, Prism_single_player.value] = await invoke("get_world")
     }
 
     function check_selected(launcher, type, index) {
@@ -88,7 +122,18 @@
         }
     }
 
-    function get_path() {
+    function set_world() {
+        //if(selected.value[0] == "MC"){
+        //    if(selected.value[1] == "mp"){
+        invoke("set_world", {launcher: selected.value[0], serverType: selected.value[1], index: selected.value[2]})
+
+        console.log(selected.value[0], selected.value[1], selected.value[2])
+            //} else {
+                //invoke("set_world")
+            //}
+        //} else {
+            //console.log("not selected")
+        //}
         
     }
 
@@ -100,7 +145,12 @@
 
 
 <style>
-    .buttons {
+    .refresh {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+    }
+    .select {
         position: absolute;
         bottom: 20px;
         right: 20px;
