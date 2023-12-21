@@ -1,19 +1,19 @@
 <template>
     <div class="launcher">
-        <li :class="{if_selected: check_grand_child_selected('MC')}">Vanilla Launcher</li>
+        <li :class="{if_selected: check_grand_child_selected(0)}">Vanilla Launcher</li>
 
-        <li class="world_type" :class="{if_selected: check_child_selected('MC', 'mp')}" @click="MC_multi_player_show = !MC_multi_player_show">MP</li>
+        <li class="world_type" :class="{if_selected: check_child_selected(0)}" @click="MC_multi_player_show = !MC_multi_player_show">MP</li>
 
-        <li class="world" :class="{if_selected: check_selected('MC', 'mp', index)}" @click="selected = ['MC', 'mp', index]" 
+        <li class="world" :class="{if_selected: check_selected(0, index)}" @click="selected = [0, index]" 
         v-if="MC_multi_player_show" v-for="(item, index) in MC_multi_player">
 
             {{ item.substring(item.lastIndexOf('\\')+1, item.length) }}
 
         </li>
 
-        <li class="world_type" :class="{if_selected: check_child_selected('MC', 'sp')}" @click="MC_single_player_show = !MC_single_player_show">SP</li>
+        <li class="world_type" :class="{if_selected: check_child_selected(1)}" @click="MC_single_player_show = !MC_single_player_show">SP</li>
 
-        <li class="world" :class="{if_selected: check_selected('MC', 'sp', index)}" @click="selected = ['MC', 'sp', index]" 
+        <li class="world" :class="{if_selected: check_selected(1, index)}" @click="selected = [1, index]" 
         v-if="MC_single_player_show" v-for="(item, index) in MC_single_player">
 
             {{ item.substring(item.lastIndexOf('\\')+1, item.length) }}
@@ -21,20 +21,20 @@
         </li>
 
 
-        <li :class="{if_selected: check_grand_child_selected('Prism')}">Prism Launcher</li>
+        <li :class="{if_selected: check_grand_child_selected(2)}">Prism Launcher</li>
 
-        <li class="world_type" :class="{if_selected: check_child_selected('Prism', 'mp')}" @click="Prism_multi_player_show = !Prism_multi_player_show">MP</li>
+        <li class="world_type" :class="{if_selected: check_child_selected(2)}" @click="Prism_multi_player_show = !Prism_multi_player_show">MP</li>
 
-        <li class="world" :class="{if_selected: check_selected('Prism', 'mp', index)}" @click="selected = ['Prism', 'mp', index]" 
+        <li class="world" :class="{if_selected: check_selected(2, index)}" @click="selected = [2, index]" 
         v-if="Prism_multi_player_show" v-for="(item, index) in Prism_multi_player">
 
             {{ item.substring(item.lastIndexOf('\\')+1, item.length) }}
 
         </li>
 
-        <li class="world_type" :class="{if_selected: check_child_selected('Prism', 'sp')}" @click="Prism_single_player_show = !Prism_single_player_show">SP</li>
+        <li class="world_type" :class="{if_selected: check_child_selected(3)}" @click="Prism_single_player_show = !Prism_single_player_show">SP</li>
 
-        <li class="world" :class="{if_selected: check_selected('Prism', 'sp', index)}" @click="selected = ['Prism', 'sp', index]" 
+        <li class="world" :class="{if_selected: check_selected(3, index)}" @click="selected = [3, index]" 
         v-if="Prism_single_player_show" v-for="(item, index) in Prism_single_player">
 
             {{ item.substring(item.lastIndexOf('\\')+1, item.length) }}
@@ -78,27 +78,31 @@
         
     });
 
-    var selected = ref(["launcher", "type", 0])
+    //var selected = ref(["launcher", "type", 0])
 
-    var MC_multi_player = ref()
-    var MC_single_player = ref()
-    var Prism_multi_player = ref()
-    var Prism_single_player = ref()
+    var selected = ref([0, 0]) // 0..3 lists, 0... items in list
+
+    var MC_multi_player = ref() //              0
+    var MC_single_player = ref() //             1
+    var Prism_multi_player = ref() //           2
+    var Prism_single_player = ref() //          3
 
 
-    var MC_multi_player_show = ref(true)
-    var MC_single_player_show = ref(true)
-    var Prism_multi_player_show = ref(true)
-    var Prism_single_player_show = ref(true)
+    var MC_multi_player_show = ref(true) //     0
+    var MC_single_player_show = ref(true) //    1
+    var Prism_multi_player_show = ref(true) //  2
+    var Prism_single_player_show = ref(true) // 3
 
     get_worlds()
+
+    invoke("get_current_world")
     
     async function get_worlds() {
         [MC_multi_player.value, MC_single_player.value, 
         Prism_multi_player.value, Prism_single_player.value] = await invoke("get_world")
     }
 
-    function check_selected(launcher, type, index) {
+    /*function check_selected(launcher, type, index) {
         if(JSON.stringify(selected.value) == JSON.stringify([launcher,type,index])) {
             return true
         } else {
@@ -119,15 +123,39 @@
             return true
         } else {
             return false
+        }       0123  3
+    }*/
+
+    function check_selected(list, index) {
+        if (selected.value[0] == list && selected.value[1] == [index]){
+            return true
+        } else {
+            return false
+        }
+    }
+
+    function check_child_selected(list) {
+        if (selected.value[0] == list) {
+            return true
+        } else {
+            return false
+        }
+    } 
+
+    function check_grand_child_selected(list) {
+        if (selected.value[0] > 1 && list > 1) {
+            return true
+        } else {
+            return false
         }
     }
 
     function set_world() {
         //if(selected.value[0] == "MC"){
         //    if(selected.value[1] == "mp"){
-        invoke("set_world", {launcher: selected.value[0], serverType: selected.value[1], index: selected.value[2]})
+        invoke("set_world", {list: selected.value[0], index: selected.value[1]})
 
-        console.log(selected.value[0], selected.value[1], selected.value[2])
+        console.log(selected.value[0], selected.value[1])
             //} else {
                 //invoke("set_world")
             //}

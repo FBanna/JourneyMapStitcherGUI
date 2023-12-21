@@ -395,6 +395,8 @@ async fn select_world_window(app: tauri::AppHandle) {
         .build();
 }
 
+
+//gets all current MC worlds and gives to frontend
 #[tauri::command]
 fn get_world(tauriNewPath: TauriState<NewPath>) -> (Vec<PathBuf>, Vec<PathBuf>, Vec<PathBuf>, Vec<PathBuf>){
 
@@ -427,12 +429,13 @@ fn get_world(tauriNewPath: TauriState<NewPath>) -> (Vec<PathBuf>, Vec<PathBuf>, 
 
 }
 
+//sets current world by changing mutex
 #[tauri::command]
-fn set_world(launcher: String, serverType: String, index: usize, tauriCurrentPath: TauriState<CurrentPath>, tauriNewPath: TauriState<NewPath>) {
+fn set_world(list: i32, index: usize, tauriCurrentPath: TauriState<CurrentPath>, tauriNewPath: TauriState<NewPath>) {
 
     let mut locked_path = tauriCurrentPath.path.lock().expect("POISONED");
 
-    if launcher == "MC" {
+    /*if launcher == "MC" {
         if serverType == "mp"{
             
             let mut locked_MC_multi_player_path = tauriNewPath.MC_multi_player.lock().expect("POISONED");
@@ -454,10 +457,23 @@ fn set_world(launcher: String, serverType: String, index: usize, tauriCurrentPat
             let mut locked_Prism_single_player_path = tauriNewPath.Prism_single_player.lock().expect("POISONED");
             *locked_path = locked_Prism_single_player_path[index].clone();
         }
+    }*/
+
+    //let mut selected_paths = tauriNewPath..lock().expect("POISONED");
+    let selected_paths: std::sync::MutexGuard<'_, Vec<PathBuf>>;
+    match list {
+        0 => selected_paths = tauriNewPath.MC_multi_player.lock().expect("POISONED"),
+        1 => selected_paths = tauriNewPath.MC_single_player.lock().expect("POISONED"),
+        2 => selected_paths = tauriNewPath.Prism_multi_player.lock().expect("POISONED"),
+        3 => selected_paths = tauriNewPath.Prism_single_player.lock().expect("POISONED"),
+        _ => println!("world not found, check frontend")
+
     }
 
+    *locked_path = selected_paths[index].clone();
 }
 
+//saves last world to disc
 #[tauri::command]
 fn store_last_world(tauriPath: TauriState<CurrentPath>) {
     let file_path = Path::new("worldSave.txt");
@@ -470,6 +486,38 @@ fn store_last_world(tauriPath: TauriState<CurrentPath>) {
 
     drop(locked_path);
 }
+
+#[tauri::command]
+fn get_current_world(tauri_new_paths: TauriState<NewPath>, tauri_current_path: TauriState<CurrentPath>) {
+    let current_path = tauri_current_path.path.lock().expect("POISONED");
+
+    let new_paths = [
+        tauri_new_paths.MC_multi_player.lock().expect("POISONED"),
+        tauri_new_paths.MC_single_player.lock().expect("POISONED"),
+        tauri_new_paths.Prism_multi_player.lock().expect("POISONED"),
+        tauri_new_paths.Prism_single_player.lock().expect("POISONED")];
+    
+    /*for item in &new_paths{
+        for world_path in item.clone() {
+            if world_path == current_path.clone() {
+                println!("{:?}", world_path)
+            }
+        }
+    }*/
+
+    for item in 0..4{
+        for world_path in 0..new_paths[item].len(){
+            if new_paths[item][world_path] == current_path.clone(){
+                println!("{}, {}", item, world_path)
+                
+            }
+        }
+    }
+
+
+
+    
+}   
 
 
 struct CurrentPath {
@@ -515,7 +563,7 @@ async fn main() {
         .manage(NewPath {MC_multi_player: Arc::new(Mutex::new(Vec::new())), MC_single_player: Arc::new(Mutex::new(Vec::new())), 
             Prism_multi_player: Arc::new(Mutex::new(Vec::new())), Prism_single_player: Arc::new(Mutex::new(Vec::new()))})
 
-        .invoke_handler(tauri::generate_handler![stitch, select_world_window, get_world, set_world, store_last_world])
+        .invoke_handler(tauri::generate_handler![stitch, select_world_window, get_world, set_world, store_last_world, get_current_world])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 

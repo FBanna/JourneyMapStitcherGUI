@@ -75,7 +75,7 @@
       <br><br>
       <button class="inputsButton" @click="stitch">Stitch</button>
       <br><br>
-      <button class="inputsButton" @click="select_world_window">Stitch</button>
+      <button class="inputsButton" @click="select_world_window">Select world</button>
     </div>
 
   </div>
