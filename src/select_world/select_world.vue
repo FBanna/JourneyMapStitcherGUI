@@ -5,7 +5,7 @@
         <li class="world_type" :class="{if_selected: check_child_selected(0)}" @click="MC_multi_player_show = !MC_multi_player_show">MP</li>
 
         <li class="world" :class="{if_selected: check_selected(0, index)}" @click="selected = [0, index]" 
-        v-if="MC_multi_player_show" v-for="(item, index) in MC_multi_player">
+        v-if="MC_multi_player_show" v-for="(item, index) in paths[0]">
 
             {{ item.substring(item.lastIndexOf('\\')+1, item.length) }}
 
@@ -14,7 +14,7 @@
         <li class="world_type" :class="{if_selected: check_child_selected(1)}" @click="MC_single_player_show = !MC_single_player_show">SP</li>
 
         <li class="world" :class="{if_selected: check_selected(1, index)}" @click="selected = [1, index]" 
-        v-if="MC_single_player_show" v-for="(item, index) in MC_single_player">
+        v-if="MC_single_player_show" v-for="(item, index) in paths[1]">
 
             {{ item.substring(item.lastIndexOf('\\')+1, item.length) }}
 
@@ -26,7 +26,7 @@
         <li class="world_type" :class="{if_selected: check_child_selected(2)}" @click="Prism_multi_player_show = !Prism_multi_player_show">MP</li>
 
         <li class="world" :class="{if_selected: check_selected(2, index)}" @click="selected = [2, index]" 
-        v-if="Prism_multi_player_show" v-for="(item, index) in Prism_multi_player">
+        v-if="Prism_multi_player_show" v-for="(item, index) in paths[2]">
 
             {{ item.substring(item.lastIndexOf('\\')+1, item.length) }}
 
@@ -35,7 +35,7 @@
         <li class="world_type" :class="{if_selected: check_child_selected(3)}" @click="Prism_single_player_show = !Prism_single_player_show">SP</li>
 
         <li class="world" :class="{if_selected: check_selected(3, index)}" @click="selected = [3, index]" 
-        v-if="Prism_single_player_show" v-for="(item, index) in Prism_single_player">
+        v-if="Prism_single_player_show" v-for="(item, index) in paths[3]">
 
             {{ item.substring(item.lastIndexOf('\\')+1, item.length) }}
 
@@ -45,7 +45,7 @@
 
 
     <div class="refresh">
-        <button class="inputsButton" @click="get_worlds">Refresh</button>
+        <button class="inputsButton" @click="refresh">Refresh</button>
     </div>
 
     <div class="select">
@@ -72,7 +72,8 @@
 
     window.getCurrent().listen(TauriEvent.WINDOW_CLOSE_REQUESTED, () => {
         console.log("clicked")
-        invoke("store_last_world")
+        //invoke("store_last_world")
+        set_world()
         appWindow.close()
     
         
@@ -82,10 +83,12 @@
 
     var selected = ref([0, 0]) // 0..3 lists, 0... items in list
 
-    var MC_multi_player = ref() //              0
+    /*var MC_multi_player = ref() //              0
     var MC_single_player = ref() //             1
     var Prism_multi_player = ref() //           2
-    var Prism_single_player = ref() //          3
+    var Prism_single_player = ref() //          3*/
+
+    var paths = ref()
 
 
     var MC_multi_player_show = ref(true) //     0
@@ -93,13 +96,11 @@
     var Prism_multi_player_show = ref(true) //  2
     var Prism_single_player_show = ref(true) // 3
 
-    get_worlds()
+    refresh()
 
-    invoke("get_current_world")
-    
-    async function get_worlds() {
-        [MC_multi_player.value, MC_single_player.value, 
-        Prism_multi_player.value, Prism_single_player.value] = await invoke("get_world")
+    async function refresh(){
+        paths.value = await invoke("get_world")
+        selected.value = await invoke("get_selected")
     }
 
     /*function check_selected(launcher, type, index) {
@@ -150,19 +151,12 @@
         }
     }
 
-    function set_world() {
-        //if(selected.value[0] == "MC"){
-        //    if(selected.value[1] == "mp"){
-        invoke("set_world", {list: selected.value[0], index: selected.value[1]})
+    async function set_world() {
+
+        invoke("set_world", {list: selected.value[0], index: selected.value[1], window: appWindow})
 
         console.log(selected.value[0], selected.value[1])
-            //} else {
-                //invoke("set_world")
-            //}
-        //} else {
-            //console.log("not selected")
-        //}
-        
+
     }
 
     
@@ -174,12 +168,12 @@
 
 <style>
     .refresh {
-        position: absolute;
+        position: fixed;
         bottom: 20px;
         left: 20px;
     }
     .select {
-        position: absolute;
+        position: fixed;
         bottom: 20px;
         right: 20px;
     }

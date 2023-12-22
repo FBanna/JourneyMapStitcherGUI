@@ -90,7 +90,11 @@
   import leaflet from "leaflet";
   import { invoke } from '@tauri-apps/api';
   //import { WebviewWindow, LogicalSize, PhysicalSize, title  } from '@tauri-apps/api/window'
+  import { window } from "@tauri-apps/api"
+  import { TauriEvent, emit } from "@tauri-apps/api/event"
   import { appWindow } from '@tauri-apps/api/window';
+  import { listen } from '@tauri-apps/api/event'
+  
 
 
   //import { invoke } from '@tauri-apps/api' 
@@ -120,6 +124,21 @@
 
   var marker;
   var selection;
+
+  window.getCurrent().listen(TauriEvent.WINDOW_CLOSE_REQUESTED, () => {
+    console.log("clicked")
+    invoke("store_last_world")
+    appWindow.close()
+    
+        
+  });
+
+
+  const unlisten = await listen('NICE', (event) => {
+    // event.event is the event name (useful if you want to use a single callback fn for multiple event types)
+    // event.payload is the payload object
+    console.log("NICE");
+  })  
   
   
   onMounted(() => {
@@ -225,9 +244,7 @@
 
 
 
-  //const progress = await invoke('do_some_long_task', {    
-  //    window: appWindow
-  //});
+
 
 </script>
 

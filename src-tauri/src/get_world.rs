@@ -22,7 +22,7 @@ use std::borrow::Cow;
 use paths_as_strings;
 
 
-pub fn mc_data() -> (Vec<PathBuf>, Vec<PathBuf>, Vec<PathBuf>, Vec<PathBuf>) {
+pub fn mc_data() -> (Vec<Vec<PathBuf>>) {
     //let mut multi_player: Vec<PathBuf> = Vec::new();
     //let mut single_player: Vec<PathBuf> = Vec::new();
 
@@ -35,7 +35,7 @@ pub fn mc_data() -> (Vec<PathBuf>, Vec<PathBuf>, Vec<PathBuf>, Vec<PathBuf>) {
 
     //println!("{:?}", Prism_multi_player);
     //println!("\n\n{:?}", Prism_single_player);
-    return(MC_multi_player, MC_single_player, Prism_multi_player, Prism_single_player)
+    return [MC_multi_player, MC_single_player, Prism_multi_player, Prism_single_player].to_vec()
 }
 
 
@@ -63,7 +63,7 @@ fn data_dir_search(path_to_dir: PathBuf) -> Vec<PathBuf> {
         }
     }
 
-    return(paths_found)
+    return paths_found
 
 }
 
@@ -104,7 +104,7 @@ fn data_instance_search(path_to_dir: PathBuf, world_type: PathBuf) -> Vec<PathBu
         }
     }
 
-    return(paths_found);
+    return paths_found;
 
 }
 
