@@ -94,7 +94,8 @@
   import { TauriEvent, emit } from "@tauri-apps/api/event"
   import { appWindow } from '@tauri-apps/api/window';
   import { listen } from '@tauri-apps/api/event'
-  
+  import { exit } from '@tauri-apps/api/process';
+
 
 
   //import { invoke } from '@tauri-apps/api' 
@@ -117,7 +118,7 @@
   var lng = ref(0)
 
   var dimension = ref("overworld")
-  var url;
+
   var tileUrl;
 
   var ifCtrl = ref(0)
@@ -125,19 +126,38 @@
   var marker;
   var selection;
 
+  var reloads = 0
+
   window.getCurrent().listen(TauriEvent.WINDOW_CLOSE_REQUESTED, () => {
     console.log("clicked")
     invoke("store_last_world")
-    appWindow.close()
+    exit(1);
     
         
   });
 
 
-  const unlisten = await listen('NICE', (event) => {
-    // event.event is the event name (useful if you want to use a single callback fn for multiple event types)
-    // event.payload is the payload object
-    console.log("NICE");
+  const unlisten = listen('REFRESH', (event) => {
+
+    console.log("refreshed!");
+
+    reloads = reloads + 1
+
+    console.log("1")
+    
+    
+    
+    console.log("http://localhost:3000/" + reloads + "/" + dimension.value + "/{z}/{x}/{y}")
+    tileUrl.setUrl("http://localhost:3000/" + reloads + "/" + dimension.value + "/{z}/{x}/{y}")
+    console.log("1")
+
+    map.setView([0,0],2)
+
+    
+
+
+    console.log("done")
+
   })  
   
   
@@ -148,7 +168,7 @@
     }).setView([x1.value, z2.value], 2);
     
     //leaflet.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    tileUrl = L.tileLayer("http://localhost:3000/overworld/{z}/{x}/{y}", {
+    tileUrl = L.tileLayer("http://localhost:3000/0/overworld/{z}/{x}/{y}", {
     //leaflet.tileLayer(url.value, {
       maxZoom: 8,
       maxNativeZoom: 6,
@@ -161,6 +181,7 @@
       lat.value = ev.latlng.lat;
       lng.value = ev.latlng.lng;
     });
+
   })
 
   function goto(){
@@ -178,7 +199,8 @@
   }
 
   function changeUrl() {
-    url = "http://localhost:3000/" + dimension.value + "/{z}/{x}/{y}"
+    reloads = 0
+    url = "http://localhost:3000/" + reloads + "/" + dimension.value + "/{z}/{x}/{y}"
     console.log(url)
     tileUrl.setUrl(url)
   }
@@ -283,11 +305,12 @@
     background-color: #ae00ff;
     color: white;
     border-radius: 3px;
-    width: 60px;
+    width: 100px;
     height: 20px;
     font-size: 13px;
     transition-duration: 0.2s;
     font-family: Verdana, sans-serif;
+
   }
 
   .inputsButton:hover{
@@ -323,6 +346,8 @@
     right: 20px;
     bottom: 20px;
     width: 180px;
+    text-align: center;
+
   }
 
   

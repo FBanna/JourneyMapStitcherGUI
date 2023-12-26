@@ -4,7 +4,7 @@
 
         <li class="world_type" :class="{if_selected: check_child_selected(0)}" @click="MC_multi_player_show = !MC_multi_player_show">MP</li>
 
-        <li class="world" :class="{if_selected: check_selected(0, index)}" @click="selected = [0, index]" 
+        <li class="world" :class="{if_selected: check_selected(0, index)}" @click="selected = [0, index], changed = true" 
         v-if="MC_multi_player_show" v-for="(item, index) in paths[0]">
 
             {{ item.substring(item.lastIndexOf('\\')+1, item.length) }}
@@ -13,7 +13,7 @@
 
         <li class="world_type" :class="{if_selected: check_child_selected(1)}" @click="MC_single_player_show = !MC_single_player_show">SP</li>
 
-        <li class="world" :class="{if_selected: check_selected(1, index)}" @click="selected = [1, index]" 
+        <li class="world" :class="{if_selected: check_selected(1, index)}" @click="selected = [1, index], changed = true" 
         v-if="MC_single_player_show" v-for="(item, index) in paths[1]">
 
             {{ item.substring(item.lastIndexOf('\\')+1, item.length) }}
@@ -25,7 +25,7 @@
 
         <li class="world_type" :class="{if_selected: check_child_selected(2)}" @click="Prism_multi_player_show = !Prism_multi_player_show">MP</li>
 
-        <li class="world" :class="{if_selected: check_selected(2, index)}" @click="selected = [2, index]" 
+        <li class="world" :class="{if_selected: check_selected(2, index)}" @click="selected = [2, index], changed = true" 
         v-if="Prism_multi_player_show" v-for="(item, index) in paths[2]">
 
             {{ item.substring(item.lastIndexOf('\\')+1, item.length) }}
@@ -34,7 +34,7 @@
 
         <li class="world_type" :class="{if_selected: check_child_selected(3)}" @click="Prism_single_player_show = !Prism_single_player_show">SP</li>
 
-        <li class="world" :class="{if_selected: check_selected(3, index)}" @click="selected = [3, index]" 
+        <li class="world" :class="{if_selected: check_selected(3, index)}" @click="selected = [3, index], changed = true" 
         v-if="Prism_single_player_show" v-for="(item, index) in paths[3]">
 
             {{ item.substring(item.lastIndexOf('\\')+1, item.length) }}
@@ -51,10 +51,7 @@
     <div class="select">
         <button class="inputsButton" @click="set_world">Select</button>
     </div>
-
-    {{ selected }}
-
-    
+   
 
 </template>
 
@@ -73,7 +70,11 @@
     window.getCurrent().listen(TauriEvent.WINDOW_CLOSE_REQUESTED, () => {
         console.log("clicked")
         //invoke("store_last_world")
-        set_world()
+
+        if (changed.value == true) {
+            set_world()
+        }
+        
         appWindow.close()
     
         
@@ -89,6 +90,8 @@
     var Prism_single_player = ref() //          3*/
 
     var paths = ref()
+
+    var changed = ref(false)
 
 
     var MC_multi_player_show = ref(true) //     0
@@ -153,9 +156,13 @@
 
     async function set_world() {
 
-        invoke("set_world", {list: selected.value[0], index: selected.value[1], window: appWindow})
+        invoke("set_world", {list: selected.value[0], index: selected.value[1]})
 
         console.log(selected.value[0], selected.value[1])
+
+        changed.value = false
+
+        emit('REFRESH')
 
     }
 

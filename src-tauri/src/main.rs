@@ -97,9 +97,6 @@ async fn stitch(x1: f32, y1: f32, x2:f32, y2:f32, mut radius: f32, style: String
         ysize = ((y1-y2)/512.0).round().abs();
         
 
-        
-
-
         if x1 < x2{
             startxtile = ((x1/512.0).round()) as i32;
         } else {
@@ -265,7 +262,8 @@ async fn server(stateholder: Arc<Mutex<PathBuf>>) {
     // build our application with a route
     let app = Router::new()
         // `GET /` goes to `root`
-        .route("/:p/:z/:x/:y", get(root))
+
+        .route("/:r/:p/:z/:x/:y", get(root))
         .with_state(state);
 
     // run our app with hyper
@@ -279,7 +277,7 @@ async fn server(stateholder: Arc<Mutex<PathBuf>>) {
 }
 
 
-async fn root(State(state): State<AppState>, axumPath((dim , z, x,y)): axumPath<(String, i32, i32, i32)>) ->  impl axum::response::IntoResponse {
+async fn root(State(state): State<AppState>, axumPath((realod,dim , z, x,y)): axumPath<(i32, String, i32, i32, i32)>) ->  impl axum::response::IntoResponse {
     
     //let mut locked_path = state.path.lock().expect("mutex was poisoned");
     //println!("{}", locked_path.file_name().unwrap().to_str().unwrap().to_string());
@@ -402,33 +400,8 @@ async fn select_world_window(app: tauri::AppHandle) {
 #[tauri::command]
 fn get_world(tauriNewPath: TauriState<NewPath>) -> (Vec<Vec<PathBuf>>){
 
-    //let (MC_multi_player_path, MC_single_player_path ,
-    //     Prism_multi_player_path, Prism_single_player_path) = get_world::mc_data();
-    
-
     let paths = get_world::mc_data();
-    /*
-    // MC multi player //
-    let mut locked_MC_multi_player_path = tauriNewPath.MC_multi_player.lock().expect("POISONED");
-    *locked_MC_multi_player_path = MC_multi_player_path.clone();
-    drop(locked_MC_multi_player_path);
-    
-    // MC single Player //
-    let mut locked_MC_single_player_path = tauriNewPath.MC_single_player.lock().expect("POISONED");
-    *locked_MC_single_player_path = MC_single_player_path.clone();
-    drop(locked_MC_single_player_path);
-    
 
-    // Prism multi Player //
-    let mut locked_Prism_multi_player_path = tauriNewPath.Prism_multi_player.lock().expect("POISONED");
-    *locked_Prism_multi_player_path = Prism_multi_player_path.clone();
-    drop(locked_Prism_multi_player_path);
-    
-    // Prism single Player //
-    let mut locked_Prism_single_player_path = tauriNewPath.Prism_single_player.lock().expect("POISONED");
-    *locked_Prism_single_player_path = Prism_single_player_path.clone();
-    drop(locked_Prism_single_player_path);
-    */
     let mut locked_paths = tauriNewPath.paths.lock().expect("POISONED");
 
     *locked_paths = paths.clone();
@@ -441,7 +414,7 @@ fn get_world(tauriNewPath: TauriState<NewPath>) -> (Vec<Vec<PathBuf>>){
 
 //sets current world by changing mutex and updating frontend
 #[tauri::command]
-fn set_world(list: usize, index: usize, window: Window, tauriCurrentPath: TauriState<CurrentPath>, tauriNewPath: TauriState<NewPath>) {
+fn set_world(list: usize, index: usize, tauriCurrentPath: TauriState<CurrentPath>, tauriNewPath: TauriState<NewPath>) {
 
     let mut locked_path = tauriCurrentPath.path.lock().expect("POISONED");
 
@@ -449,12 +422,12 @@ fn set_world(list: usize, index: usize, window: Window, tauriCurrentPath: TauriS
 
     *locked_path = selected_paths[list][index].clone();
 
-    window.emit("NICE", 3).unwrap();
 }
 
 //saves last world to disc
 #[tauri::command]
 fn store_last_world(tauriPath: TauriState<CurrentPath>) {
+
     let file_path = Path::new("worldSave.txt");
 
     let mut locked_path = tauriPath.path.lock().expect("POISONED");
@@ -468,23 +441,10 @@ fn store_last_world(tauriPath: TauriState<CurrentPath>) {
 
 #[tauri::command]
 fn get_selected(tauri_new_paths: TauriState<NewPath>, tauri_current_path: TauriState<CurrentPath>) -> Vec<usize> {
+    
     let current_path = tauri_current_path.path.lock().expect("POISONED");
 
-    /*let new_paths = [
-        tauri_new_paths.MC_multi_player.lock().expect("POISONED"),
-        tauri_new_paths.MC_single_player.lock().expect("POISONED"),
-        tauri_new_paths.Prism_multi_player.lock().expect("POISONED"),
-        tauri_new_paths.Prism_single_player.lock().expect("POISONED")];*/
-
     let new_paths = tauri_new_paths.paths.lock().expect("POISONED");
-    
-    /*for item in &new_paths{
-        for world_path in item.clone() {
-            if world_path == current_path.clone() {
-                println!("{:?}", world_path)
-            }
-        }
-    }*/
 
     for list in 0usize..4{
         println!("{}", list);
@@ -499,25 +459,12 @@ fn get_selected(tauri_new_paths: TauriState<NewPath>, tauri_current_path: TauriS
 
     return [0, 0].to_vec()
 
-
-
-
-
-
-    
 }   
 
 
 struct CurrentPath {
     path: Arc<Mutex<PathBuf>>
 }
-
-/*struct NewPath {
-    MC_multi_player: Arc<Mutex<Vec<PathBuf>>>,
-    MC_single_player: Arc<Mutex<Vec<PathBuf>>>,
-    Prism_multi_player: Arc<Mutex<Vec<PathBuf>>>,
-    Prism_single_player: Arc<Mutex<Vec<PathBuf>>>,
-}*/
 
 struct NewPath {
     paths: Arc<Mutex<Vec<Vec<PathBuf>>>>
@@ -549,11 +496,8 @@ async fn main() {
     tauri::Builder::default()
         .manage(CurrentPath { path: pathChange })
         .manage(NewPath {paths: Arc::new(Mutex::new(Vec::new()))})
-
-
         .invoke_handler(tauri::generate_handler![stitch, select_world_window, get_world, set_world, store_last_world, get_selected])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 
-    
 }

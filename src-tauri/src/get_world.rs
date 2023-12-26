@@ -1,6 +1,6 @@
 //// TO DO ////
 
-/// launcher ///
+/// launcher /// 
 
 // MC, Prism, Multi MC
 
@@ -23,9 +23,6 @@ use paths_as_strings;
 
 
 pub fn mc_data() -> (Vec<Vec<PathBuf>>) {
-    //let mut multi_player: Vec<PathBuf> = Vec::new();
-    //let mut single_player: Vec<PathBuf> = Vec::new();
-
 
     let MC_multi_player: Vec<PathBuf> = data_dir_search(PathBuf::from(".minecraft\\journeymap\\data\\mp"));
     let MC_single_player: Vec<PathBuf> = data_dir_search(PathBuf::from(".minecraft\\journeymap\\data\\sp"));
@@ -33,8 +30,6 @@ pub fn mc_data() -> (Vec<Vec<PathBuf>>) {
     let Prism_multi_player: Vec<PathBuf> = data_instance_search(PathBuf::from("PrismLauncher\\instances"), PathBuf::from("mp"));
     let Prism_single_player: Vec<PathBuf> = data_instance_search(PathBuf::from("PrismLauncher\\instances"), PathBuf::from("sp"));
 
-    //println!("{:?}", Prism_multi_player);
-    //println!("\n\n{:?}", Prism_single_player);
     return [MC_multi_player, MC_single_player, Prism_multi_player, Prism_single_player].to_vec()
 }
 
@@ -122,9 +117,6 @@ pub fn get_last_world() -> (PathBuf){
     };
 
     path_to_world = paths_as_strings::decode_path(&path_string).unwrap();
-
-
-
 
     return path_to_world;
 }
