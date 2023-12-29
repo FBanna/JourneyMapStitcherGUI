@@ -1,46 +1,24 @@
 <template>
-    <div class="launcher">
-        <li :class="{if_selected: check_grand_child_selected(0)}">Vanilla Launcher</li>
 
-        <li class="world_type" :class="{if_selected: check_child_selected(0)}" @click="MC_multi_player_show = !MC_multi_player_show">MP</li>
+    <div class="tree">
+        <ul v-for="(launcher, launchernum) in launchers">
+            
+            <li :class="{if_selected: check_grand_child_selected(launchernum), collapsed: show[launchernum][2]}" @click="show[launchernum][2] = !show[launchernum][2]">{{launcher}} Launcher</li>
+            
 
-        <li class="world" :class="{if_selected: check_selected(0, index)}" @click="selected = [0, index], changed = true" 
-        v-if="MC_multi_player_show" v-for="(item, index) in paths[0]">
+            <ul v-if="show[launchernum][2]" v-for="(type, typenum) in types">
 
-            {{ item.substring(item.lastIndexOf('\\')+1, item.length) }}
+                <li :class="{if_selected: check_child_selected(launchernum, typenum), collapsed: show[launchernum][typenum]}" @click="show[launchernum][typenum] = !show[launchernum][typenum]">{{ type }}</li>
+            
 
-        </li>
+                <ul v-if="show[launchernum][typenum]" v-for="(item, index) in paths[launchernum][typenum]">
 
-        <li class="world_type" :class="{if_selected: check_child_selected(1)}" @click="MC_single_player_show = !MC_single_player_show">SP</li>
+                    <li @click="selected = [launchernum, typenum, index], changed = true" :class="{if_selected: check_selected(launchernum, typenum, index)}">
+                    {{ item.substring(item.lastIndexOf('\\')+1, item.length) }}</li>
 
-        <li class="world" :class="{if_selected: check_selected(1, index)}" @click="selected = [1, index], changed = true" 
-        v-if="MC_single_player_show" v-for="(item, index) in paths[1]">
-
-            {{ item.substring(item.lastIndexOf('\\')+1, item.length) }}
-
-        </li>
-
-
-        <li :class="{if_selected: check_grand_child_selected(2)}">Prism Launcher</li>
-
-        <li class="world_type" :class="{if_selected: check_child_selected(2)}" @click="Prism_multi_player_show = !Prism_multi_player_show">MP</li>
-
-        <li class="world" :class="{if_selected: check_selected(2, index)}" @click="selected = [2, index], changed = true" 
-        v-if="Prism_multi_player_show" v-for="(item, index) in paths[2]">
-
-            {{ item.substring(item.lastIndexOf('\\')+1, item.length) }}
-
-        </li>
-
-        <li class="world_type" :class="{if_selected: check_child_selected(3)}" @click="Prism_single_player_show = !Prism_single_player_show">SP</li>
-
-        <li class="world" :class="{if_selected: check_selected(3, index)}" @click="selected = [3, index], changed = true" 
-        v-if="Prism_single_player_show" v-for="(item, index) in paths[3]">
-
-            {{ item.substring(item.lastIndexOf('\\')+1, item.length) }}
-
-        </li>
-
+                </ul>
+            </ul>  
+        </ul>
     </div>
 
 
@@ -51,7 +29,7 @@
     <div class="select">
         <button class="inputsButton" @click="set_world">Select</button>
     </div>
-   
+    
 
 </template>
 
@@ -81,23 +59,25 @@
     });
 
     //var selected = ref(["launcher", "type", 0])
+    var launchers = ["Vanilla", "Prism"]
+    var types = ["MP", "SP"]
+    // 00 01 20 21
+    // 0, 1, 2, 3
+    // 0, 0, 1, 1
+    // 0, 1, 0, 1
 
-    var selected = ref([0, 0]) // 0..3 lists, 0... items in list
+    var show = ref([[true, true, true], [true, true, true]]) // types within launchers
+
+    var selected = ref([0, 0, 0]) // launchers, types, index
 
     /*var MC_multi_player = ref() //              0
     var MC_single_player = ref() //             1
     var Prism_multi_player = ref() //           2
     var Prism_single_player = ref() //          3*/
 
-    var paths = ref()
+    var paths = ref() // [[],[]]
 
     var changed = ref(false)
-
-
-    var MC_multi_player_show = ref(true) //     0
-    var MC_single_player_show = ref(true) //    1
-    var Prism_multi_player_show = ref(true) //  2
-    var Prism_single_player_show = ref(true) // 3
 
     refresh()
 
@@ -106,7 +86,7 @@
         selected.value = await invoke("get_selected")
     }
 
-    /*function check_selected(launcher, type, index) {
+    function check_selected(launcher, type, index) {
         if(JSON.stringify(selected.value) == JSON.stringify([launcher,type,index])) {
             return true
         } else {
@@ -123,14 +103,16 @@
     }
 
     function check_grand_child_selected(launcher) {
+        
         if( selected.value[0] == launcher){
+            console.log("true", launcher)
             return true
         } else {
             return false
-        }       0123  3
-    }*/
+        }
+    }
 
-    function check_selected(list, index) {
+    /*function check_selected(list, index) {
         if (selected.value[0] == list && selected.value[1] == [index]){
             return true
         } else {
@@ -138,7 +120,9 @@
         }
     }
 
-    function check_child_selected(list) {
+    function check_child_selected(launcher, type) {
+        var list = listNum(launcher, type)
+        console.log(list, launcher, type)
         if (selected.value[0] == list) {
             return true
         } else {
@@ -147,18 +131,20 @@
     } 
 
     function check_grand_child_selected(list) {
+        // 0, 1, 2
+        // 
         if (selected.value[0] > 1 && list > 1) {
             return true
         } else {
             return false
         }
-    }
+    }*/
 
     async function set_world() {
 
-        invoke("set_world", {list: selected.value[0], index: selected.value[1]})
+        invoke("set_world", {launcher: selected.value[0], list: selected.value[1], index: selected.value[2]})
 
-        console.log(selected.value[0], selected.value[1])
+        console.log(selected.value[0], selected.value[1], selected.value[2])
 
         changed.value = false
 
@@ -185,7 +171,6 @@
         right: 20px;
     }
 
-
     .inputsButton{
         border: none;
         background-color: #ae00ff;
@@ -202,21 +187,35 @@
         background-color: #01AFE4;
     }  
 
-    .launcher {
+    .if_selected {
+        color: rgb(11, 219, 11);
+        
+    }
+
+    .tree {
         font-family: Verdana, sans-serif;
+        font-size: 13px;
         user-select: none;
     }
 
-    .world_type {
-        text-indent: 20px;
+    ul {
+        list-style-type: "➤ ";
+
     }
-    .world {
-        text-indent: 40px;
+
+    ul ul {
+        list-style-type: "➤ ";
     }
-    .items {
-        position: relative;
+
+    ul ul ul {
+        list-style-type: disc;
     }
-    .if_selected {
-        color: rgb(11, 219, 11);
+
+    .collapsed {
+        list-style-type: "⮟ ";
     }
+
+
+
+
 </style>

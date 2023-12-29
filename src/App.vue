@@ -1,17 +1,12 @@
 <template>
 
-  
-
   <div id="mapid" class="map" v-on:mousedown.ctrl="boxStart"></div>
   <div class="position">
     X: {{ (lng*128).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",") }}<br>
     Z: {{ (-lat*128).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",") }}
   </div>
 
-  
-  
 
-  
   <div class="inputsBorder">
   
     <div class="inputs">
@@ -60,14 +55,6 @@
 
       </div>
 
-
-
-      
-      
-
-
-
-      
     </div>
 
     <div class="calls">
@@ -116,6 +103,8 @@
 
   var lat = ref(0)
   var lng = ref(0)
+
+  var bounds;
 
   var dimension = ref("overworld")
 
@@ -242,23 +231,54 @@
   document.addEventListener("mouseup",() => {
 
     if (ifCtrl.value == 1) {
+
+
       ifCtrl.value = 0
+
       x2.value = lng.value*128
       z2.value = -lat.value*128
 
-      console.log(lat.value, lng.value, x2.value, z2.value)
       map.dragging.enable()
-
-
 
       map.removeLayer(marker)
 
-      var bounds = [[-z1.value/128,x1.value/128],[-z2.value/128,x2.value/128]]
-      //var bounds = [[2.5, 56], [6.7,8.7]]
-      console.log(bounds)
-      selection = new L.rectangle(bounds, {color: "#ff7800", weight: 1})
-      map.addLayer(selection)
+      if (type.value == "span") {
+        
+
+        console.log(lat.value, lng.value, x2.value, z2.value)
+        
+
+
+
+        
+
+        bounds = [[-z1.value/128,x1.value/128],[-z2.value/128,x2.value/128]]
+        //var bounds = [[2.5, 56], [6.7,8.7]]
+        console.log(bounds)
+        
+        
+      } else {
+
+        console.log(x2.value, z2.value, radius.value)
+
+        if (Math.abs(x2.value-x1.value) > Math.abs(z2.value-z1.value)){
+          radius.value = Math.abs(x2.value-x1.value)
+        } else {
+          radius.value = Math.abs(z2.value-z1.value)
+        }
+
+        var difference = radius.value/128
+
+        bounds = [[(-z1.value/128)-difference, (x1.value/128)-difference],
+        [(-z1.value/128)+difference, (x1.value/128)+difference]]
+
       }
+
+      selection = new L.rectangle(bounds, {color: "#ff7800", weight: 1})
+      
+      map.addLayer(selection)
+
+    }
     
 
   })

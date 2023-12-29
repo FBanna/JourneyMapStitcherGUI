@@ -5,6 +5,7 @@ mod get_world;
 
 use std::path::Path;
 use std::path::PathBuf;
+use std::thread::JoinHandle;
 
 use axum::extract::path;
 use futures_util::lock;
@@ -50,6 +51,11 @@ use tauri::State as TauriState;
 use tauri::Manager;
 use tauri::Window;
 
+use futures::stream::FuturesUnordered;
+use futures::StreamExt;
+use tokio::task::JoinSet;
+
+
 
 /*
 
@@ -77,7 +83,7 @@ pub async fn do_some_long_task(window: Window){
 
 
 #[tauri::command]
-async fn stitch(x1: f32, y1: f32, x2:f32, y2:f32, mut radius: f32, style: String, dimension: String){
+fn stitch(x1: f32, y1: f32, x2: f32, y2: f32, mut radius: f32, style: String, dimension: String, tauriCurrentPath: TauriState<CurrentPath>){
     println!("stitch called with {} {} {} {}", x1, y1, x2, y2);
 
     let mut startxtile: i32 = 0;
@@ -91,6 +97,15 @@ async fn stitch(x1: f32, y1: f32, x2:f32, y2:f32, mut radius: f32, style: String
 
     let mut save: String;
     let mut targetfile: String;
+
+
+    let locked_path = tauriCurrentPath.path.lock().expect("POISONED");
+
+    //let path = &locked_path.clone();
+
+    println!("{:?}", locked_path);
+    drop(locked_path);
+
 
     if style == "span"{
         xsize = ((x1-x2)/512.0).round().abs();
@@ -173,9 +188,12 @@ async fn stitch(x1: f32, y1: f32, x2:f32, y2:f32, mut radius: f32, style: String
     //println!("creating {} image/s,", neededx * neededy);
 
     //println!("im HERE {} {}", neededx, neededy);
-    for ximages in 0 .. neededx {
 
-        
+    //let mut tasks = FuturesUnordered::new();
+    let mut set = JoinSet::new();
+    
+
+    for ximages in 0 .. neededx {
 
         for yimages in 0 .. neededy {
             
@@ -185,16 +203,26 @@ async fn stitch(x1: f32, y1: f32, x2:f32, y2:f32, mut radius: f32, style: String
             save = format!("out {},{}.jpg",ximages,yimages);
             //println!("{}, {}, {}, {}, {}", x, y, imagesizex, imagesizey, save);
 
-            creation(x,y,imagesizex,imagesizey,save, dimension.clone()).await;
+            //tasks.push(task::spawn(async move {
+            println!("helloooo");
+            let dimension = dimension.clone();
+            set.spawn(async move {creation(x,y,imagesizex,imagesizey,save, dimension)});
+            //}));
 
         }
     }
+
+    
 
 
 }
 
 async fn creation(startingx: i32, startingy: i32, width: i32, height: i32, out: String, dimension: String){
     // make image with width and height
+
+    
+
+
 
     let mut x: i32;
     let mut y: i32;
@@ -398,7 +426,7 @@ async fn select_world_window(app: tauri::AppHandle) {
 
 //gets all current MC worlds and gives to frontend
 #[tauri::command]
-fn get_world(tauriNewPath: TauriState<NewPath>) -> (Vec<Vec<PathBuf>>){
+fn get_world(tauriNewPath: TauriState<NewPath>) -> (Vec<Vec<Vec<PathBuf>>>){
 
     let paths = get_world::mc_data();
 
@@ -414,13 +442,14 @@ fn get_world(tauriNewPath: TauriState<NewPath>) -> (Vec<Vec<PathBuf>>){
 
 //sets current world by changing mutex and updating frontend
 #[tauri::command]
-fn set_world(list: usize, index: usize, tauriCurrentPath: TauriState<CurrentPath>, tauriNewPath: TauriState<NewPath>) {
+fn set_world(launcher:usize, list: usize, index: usize, tauriCurrentPath: TauriState<CurrentPath>, tauriNewPath: TauriState<NewPath>) {
 
     let mut locked_path = tauriCurrentPath.path.lock().expect("POISONED");
 
     let selected_paths = tauriNewPath.paths.lock().expect("POISONED");
 
-    *locked_path = selected_paths[list][index].clone();
+    //*locked_path = selected_paths[list][index].clone();
+    *locked_path = selected_paths[launcher][list][index].clone();
 
 }
 
@@ -446,6 +475,7 @@ fn get_selected(tauri_new_paths: TauriState<NewPath>, tauri_current_path: TauriS
 
     let new_paths = tauri_new_paths.paths.lock().expect("POISONED");
 
+    /*
     for list in 0usize..4{
         println!("{}", list);
         for item in 0..new_paths[list].len(){
@@ -453,6 +483,19 @@ fn get_selected(tauri_new_paths: TauriState<NewPath>, tauri_current_path: TauriS
                 
                 return [list, item].to_vec()
                 
+            }
+        }
+    }*/
+
+    for launcher in 0..2 {
+        for list in 0..new_paths[launcher].len() {
+            for item in 0..new_paths[launcher][list].len() {
+
+                if new_paths[launcher][list][item] == current_path.clone() {
+
+                    return [launcher, list, item].to_vec()
+                }
+
             }
         }
     }
@@ -467,7 +510,9 @@ struct CurrentPath {
 }
 
 struct NewPath {
-    paths: Arc<Mutex<Vec<Vec<PathBuf>>>>
+    //paths: Arc<Mutex<Vec<Vec<PathBuf>>>>
+
+    paths: Arc<Mutex<Vec<Vec<Vec<PathBuf>>>>>
 }
 
 #[derive(Clone)]

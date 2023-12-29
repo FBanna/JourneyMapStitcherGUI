@@ -22,7 +22,7 @@ use std::borrow::Cow;
 use paths_as_strings;
 
 
-pub fn mc_data() -> (Vec<Vec<PathBuf>>) {
+pub fn mc_data() -> (Vec<Vec<Vec<PathBuf>>>) {
 
     let MC_multi_player: Vec<PathBuf> = data_dir_search(PathBuf::from(".minecraft\\journeymap\\data\\mp"));
     let MC_single_player: Vec<PathBuf> = data_dir_search(PathBuf::from(".minecraft\\journeymap\\data\\sp"));
@@ -30,7 +30,7 @@ pub fn mc_data() -> (Vec<Vec<PathBuf>>) {
     let Prism_multi_player: Vec<PathBuf> = data_instance_search(PathBuf::from("PrismLauncher\\instances"), PathBuf::from("mp"));
     let Prism_single_player: Vec<PathBuf> = data_instance_search(PathBuf::from("PrismLauncher\\instances"), PathBuf::from("sp"));
 
-    return [MC_multi_player, MC_single_player, Prism_multi_player, Prism_single_player].to_vec()
+    return [[MC_multi_player, MC_single_player].to_vec(), [Prism_multi_player, Prism_single_player].to_vec()].to_vec()
 }
 
 
