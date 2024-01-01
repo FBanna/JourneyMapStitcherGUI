@@ -18,7 +18,7 @@
 
 
       <label for="dimension" >Enter dimension:</label><br>
-      <select @change="changeUrl" class="inputsForm" name="dimension" v-model="dimension">
+      <select @change="changeDimension" class="inputsForm" name="dimension" v-model="newdimension">
         <option value="overworld">Overworld</option>
         <option value="the_nether">Nether</option>
         <option value="the_end">End</option>
@@ -67,6 +67,8 @@
 
   </div>
 
+
+
 </template>
 
 
@@ -107,6 +109,8 @@
   var bounds;
 
   var dimension = ref("overworld")
+
+  var newdimension = ref("overworld")
 
   var tileUrl;
 
@@ -187,11 +191,30 @@
     await invoke("stitch", {x1: x1.value, y1: z1.value, x2: x2.value, y2: z2.value, radius: radius.value, style: type.value, dimension: dimension.value})
   }
 
-  function changeUrl() {
+  function changeDimension() {
+    if (dimension.value == "overworld" && newdimension.value == "the_nether") {
+      
+      lat.value = lat.value/8
+      lng.value = lng.value/8
+      map.setView([lat.value, lng.value])
+    } else if (dimension.value == "the_nether" && newdimension.value == "overworld") {
+
+      lat.value = lat.value*8
+      lng.value = lng.value*8
+      map.setView([lat.value, lng.value])
+    } else {
+
+      lat.value = 0
+      lng.value = 0
+      map.setView([lat.value, lng.value])
+    }
+    dimension.value = newdimension.value
+
     reloads = 0
-    url = "http://localhost:3000/" + reloads + "/" + dimension.value + "/{z}/{x}/{y}"
+    var url = "http://localhost:3000/" + reloads + "/" + dimension.value + "/{z}/{x}/{y}"
     console.log(url)
     tileUrl.setUrl(url)
+
   }
 
   /*export const changeUrl = () => {

@@ -10,6 +10,7 @@ use std::thread::JoinHandle;
 use axum::extract::path;
 use futures_util::lock;
 use image::{GenericImage, GenericImageView, ImageBuffer, Pixel, Primitive, EncodableLayout, Rgba, DynamicImage};
+use tracing_subscriber::fmt::format;
 use std::env;
 use turbojpeg;
 use std::fs::write;
@@ -83,7 +84,7 @@ pub async fn do_some_long_task(window: Window){
 
 
 #[tauri::command]
-fn stitch(x1: f32, y1: f32, x2: f32, y2: f32, mut radius: f32, style: String, dimension: String, tauriCurrentPath: TauriState<CurrentPath>){
+async fn stitch(x1: f32, y1: f32, x2: f32, y2: f32, mut radius: f32, style: String, dimension: String, tauriCurrentPath: TauriState<'_, CurrentPath>) -> Result<(), ()>{
     println!("stitch called with {} {} {} {}", x1, y1, x2, y2);
 
     let mut startxtile: i32 = 0;
@@ -97,14 +98,6 @@ fn stitch(x1: f32, y1: f32, x2: f32, y2: f32, mut radius: f32, style: String, di
 
     let mut save: String;
     let mut targetfile: String;
-
-
-    let locked_path = tauriCurrentPath.path.lock().expect("POISONED");
-
-    //let path = &locked_path.clone();
-
-    println!("{:?}", locked_path);
-    drop(locked_path);
 
 
     if style == "span"{
@@ -190,7 +183,19 @@ fn stitch(x1: f32, y1: f32, x2: f32, y2: f32, mut radius: f32, style: String, di
     //println!("im HERE {} {}", neededx, neededy);
 
     //let mut tasks = FuturesUnordered::new();
-    let mut set = JoinSet::new();
+    //let mut set = JoinSet::new();
+
+
+
+    let locked_path = tauriCurrentPath.path.lock().expect("POISONED");
+
+    let mut world_path = locked_path.clone();
+
+    world_path.push(dimension);
+
+    println!("{:?}", locked_path);
+    drop(locked_path);
+    
     
 
     for ximages in 0 .. neededx {
@@ -204,32 +209,44 @@ fn stitch(x1: f32, y1: f32, x2: f32, y2: f32, mut radius: f32, style: String, di
             //println!("{}, {}, {}, {}, {}", x, y, imagesizex, imagesizey, save);
 
             //tasks.push(task::spawn(async move {
-            println!("helloooo");
-            let dimension = dimension.clone();
-            set.spawn(async move {creation(x,y,imagesizex,imagesizey,save, dimension)});
+            //let dimension = dimension.clone();
+
+            let world_path = world_path.clone();
+            //set.spawn(async move {
+            //    creation(x,y,imagesizex,imagesizey,save, world_path).await
+            //});
+
+            tokio::spawn(async move{
+                creation(x,y,imagesizex,imagesizey,save, world_path).await
+            });
+
+            
             //}));
 
         }
     }
+
+    //while let Some(res) = set.join_next().await {
+    //    let out = res?;
+        // ...
+    //}
+    Ok(())
 
     
 
 
 }
 
-async fn creation(startingx: i32, startingy: i32, width: i32, height: i32, out: String, dimension: String){
+async fn creation(startingx: i32, startingy: i32, width: i32, height: i32, out: String, world_path: PathBuf){
     // make image with width and height
-
-    
-
-
 
     let mut x: i32;
     let mut y: i32;
-    let mut targetfile: String;
+    let mut targetfile: PathBuf;
 
     let mut imgbuf = image::ImageBuffer::new((width*512) as u32,(height*512) as u32);
     println!("{} {} {} {} {}", startingx*512, startingy*512, width*512, height*512, out);
+
     for xaxis in 0 .. width {
 
         x = xaxis + startingx;
@@ -240,7 +257,10 @@ async fn creation(startingx: i32, startingy: i32, width: i32, height: i32, out: 
             y = yaxis + startingy;
             
 
-            targetfile = format!("{}/day/{},{}.png", dimension, x, y);
+            //targetfile = format!("{}/day/{},{}.png", dimension, x, y);
+            targetfile = world_path.clone();
+            targetfile.push(format!("day/{},{}.png", x, y));
+
             let path = Path::new(&targetfile);
 
             if path.exists() {
