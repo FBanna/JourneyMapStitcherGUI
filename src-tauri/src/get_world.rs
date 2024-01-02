@@ -12,6 +12,7 @@
 // Xairo map data (cant remember name)
 // mabye MC world data (in far future)
 
+use std::result;
 use std::{fs, path::PathBuf};
 use std::path::Path;
 use directories::{BaseDirs, UserDirs, ProjectDirs};
@@ -42,8 +43,7 @@ fn data_dir_search(path_to_dir: PathBuf) -> Vec<PathBuf> {
 
         let full_path = &data_dir.data_dir().join(path_to_dir);
 
-        if full_path.exists() {
-            let paths = fs::read_dir(full_path).unwrap();
+        if let Ok(paths) = fs::read_dir(full_path){
 
             for path in paths {
                 
@@ -70,12 +70,11 @@ fn data_instance_search(path_to_dir: PathBuf, world_type: PathBuf) -> Vec<PathBu
 
         let full_path = &data_dir.data_dir().join(path_to_dir);
 
-        if full_path.exists() {
-            
-            let paths = fs::read_dir(full_path).unwrap();
 
+        
+        if let Ok(paths) = fs::read_dir(full_path){
             for path in paths {
-                
+            
                 if path.as_ref().unwrap().path().is_dir() == true {
 
                     let check_journey: PathBuf = [path.as_ref().unwrap().path(), PathBuf::from(".minecraft\\journeymap\\data"), world_type.clone()].iter().collect();
@@ -91,12 +90,10 @@ fn data_instance_search(path_to_dir: PathBuf, world_type: PathBuf) -> Vec<PathBu
 
                 }
             }
-
         } else {
-
             println!("Prism not installed!")
-
         }
+
     }
 
     return paths_found;
@@ -105,19 +102,20 @@ fn data_instance_search(path_to_dir: PathBuf, world_type: PathBuf) -> Vec<PathBu
 
 
 
-pub fn get_last_world() -> (PathBuf){
-    let mut path_to_world: PathBuf = PathBuf::new();
+pub fn get_last_world() -> PathBuf{
 
     let file_path = Path::new("worldSave.txt");
 
-    let mut path_string: String = String::from("");
-    match File::open(file_path) {
-       Ok(file) => path_string = fs::read_to_string(file_path).expect("Unable to read file"),
-       Err(error) => println!("unable to open file {}\n{}",file_path.display(),error),
-    };
+    if let Ok(path_string) = fs::read_to_string(file_path){
+        if let Ok(path_to_world) = paths_as_strings::decode_path(&path_string){
+            return path_to_world;
+        } 
+    } else {
+        println!("file does not exist")
+    }
+    
+    return PathBuf::new();
 
-    path_to_world = paths_as_strings::decode_path(&path_string).unwrap();
-
-    return path_to_world;
+    
 }
 

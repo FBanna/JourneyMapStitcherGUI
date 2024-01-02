@@ -41,6 +41,8 @@ use std::thread;
 use tokio_util;
 use std::io::{BufWriter, Cursor};
 use std::sync::{Arc, Mutex};
+use std::time::Instant;
+
 
 use bytes::Bytes;
 
@@ -261,14 +263,17 @@ async fn creation(startingx: i32, startingy: i32, width: i32, height: i32, out: 
             targetfile = world_path.clone();
             targetfile.push(format!("day/{},{}.png", x, y));
 
-            let path = Path::new(&targetfile);
+            //let path = Path::new(&targetfile);
 
-            if path.exists() {
+            //if path.exists() {
                 //println!("{} exists!", targetfile);
-
-                let tempimg = image::open(targetfile).unwrap();
+            if let Ok(tempimg) = image::open(targetfile) {
+        
+                imgbuf.copy_from(&tempimg, (512*xaxis) as u32, (512*yaxis) as u32);
+            }
+                //let tempimg = image::open(targetfile).unwrap();
                 
-                imgbuf.copy_from(&tempimg, (xaxis*512) as u32, (yaxis*512) as u32);
+                //imgbuf.copy_from(&tempimg, (xaxis*512) as u32, (yaxis*512) as u32);
 
                 //let tile_scaled = tempimg.resize(256, 256, FilterType::Nearest);
                 //let save: String = format!("./tiles/{}/{}.png", x, y);
@@ -278,7 +283,7 @@ async fn creation(startingx: i32, startingy: i32, width: i32, height: i32, out: 
                 
                 //tile_scaled.save(save).unwrap();
 
-            }
+            //}
         }
     }
 
@@ -325,7 +330,14 @@ async fn server(stateholder: Arc<Mutex<PathBuf>>) {
 }
 
 
-async fn root(State(state): State<AppState>, axumPath((realod,dim , z, x,y)): axumPath<(i32, String, i32, i32, i32)>) ->  impl axum::response::IntoResponse {
+async fn root(State(state): State<AppState>, axumPath((realod,dim , z, x,y)): axumPath<(i32, String, i32, i32, i32)>) ->  Result<impl axum::response::IntoResponse, ()> {
+    
+    let start_time = Instant::now();
+
+    let mut found: bool = false;
+
+    
+
     
     //let mut locked_path = state.path.lock().expect("mutex was poisoned");
     //println!("{}", locked_path.file_name().unwrap().to_str().unwrap().to_string());
@@ -361,6 +373,8 @@ async fn root(State(state): State<AppState>, axumPath((realod,dim , z, x,y)): ax
     let startingx: i32 = x * imagedesity;
     let startingy: i32 = y * imagedesity;
 
+    //let elapsed_copying;
+
 
 
     let mut imgbuf = image::ImageBuffer::new((512 * imagedesity) as u32,(512 * imagedesity) as u32);
@@ -376,6 +390,8 @@ async fn root(State(state): State<AppState>, axumPath((realod,dim , z, x,y)): ax
         for yaxis in 0 .. imagedesity {
 
             currenty = yaxis + startingy;
+
+            
             
 
             //targetfile = format!("{}/day/{},{}.png", dim, currentx, currenty);
@@ -384,53 +400,74 @@ async fn root(State(state): State<AppState>, axumPath((realod,dim , z, x,y)): ax
             //println!("{}", targetfile.to_str().unwrap().to_string());
             //let path = Path::new(&targetfile);
 
-            if targetfile.exists() {
+            
+            //if targetfile.exists() {
                 //println!("{} exists!", targetfile);
-
-                let tempimg = image::open(targetfile).unwrap();
+            
+            //let copying = Instant::now();
+            
+            if let Ok(tempimg) = image::open(targetfile) {
                 
-                
-                //println!("{}", onetilesize);
+                found = true;
                 imgbuf.copy_from(&tempimg, (512*xaxis) as u32, (512*yaxis) as u32);
-
-
-                
-                
-                //let save: String = format!("./tiles/{}/{}.png", x, y);
-
-                //fs::create_dir(format!("./tiles/{}",x));
-
-                
-                //imgbuf.save(save).unwrap();
-
             }
+            
+            
+            //println!("{}", onetilesize);
+            
+            
+            
+
+
+            
+            
+            //let save: String = format!("./tiles/{}/{}.png", x, y);
+
+            //fs::create_dir(format!("./tiles/{}",x));
+
+            
+            //imgbuf.save(save).unwrap();
+            //elapsed_copying = copying.elapsed();
+
+            //}
+            
         }
     }
+    let elapsed_time = start_time.elapsed();
     
-    //let tempimg = image::open(&checkfile).unwrap();
 
-    //let tile_scaled = tempimg.resize(256, 256, FilterType::Nearest);
-    let tile_scaled = &DynamicImage::ImageRgba8(imgbuf).resize(256, 256, FilterType::Nearest);
-
-    let mut buffer = BufWriter::new(Cursor::new(Vec::new()));
-
-    tile_scaled.write_to(&mut buffer, ImageFormat::Png).unwrap();
-
-    let raw: Vec<u8> = buffer.into_inner().unwrap().into_inner();
-
-    // Convert stream to axum HTTP body
-    let bytes = Bytes::from(raw);
-    let body = Full::new(bytes);
-
-    // Headers
-    let headers = AppendHeaders([
-        (header::CONTENT_TYPE, "image/png"),
-        (header::CONTENT_DISPOSITION, "inline; filename=\"test.png\"")
-    ]);
     
-    // Return
-    
-    return(headers, body);
+
+    //let body;
+    if found == true {
+        // Headers
+        let headers = AppendHeaders([
+            (header::CONTENT_TYPE, "image/png"),
+            (header::CONTENT_DISPOSITION, "inline; filename=\"test.png\"")
+        ]);
+
+        let start_time_1 = Instant::now();
+        //let tempimg = image::open(&checkfile).unwrap();
+
+        //let tile_scaled = tempimg.resize(256, 256, FilterType::Nearest);
+        let tile_scaled = &DynamicImage::ImageRgba8(imgbuf).resize(256, 256, FilterType::Nearest);
+
+        let mut buffer = BufWriter::new(Cursor::new(Vec::new()));
+
+        tile_scaled.write_to(&mut buffer, ImageFormat::Png).unwrap();
+
+        let raw: Vec<u8> = buffer.into_inner().unwrap().into_inner();
+
+        // Convert stream to axum HTTP body
+        let bytes = Bytes::from(raw);
+        let body = Full::new(bytes);
+        let elapsed_time_1 = start_time_1.elapsed();
+
+        println!("Elapsed time: {:?}, {:?}, {:?}", elapsed_time,elapsed_time_1,found);
+        Ok((headers, body))
+    } else {
+        Err(())
+    }
 
 }
 
