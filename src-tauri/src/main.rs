@@ -330,7 +330,7 @@ async fn server(stateholder: Arc<Mutex<PathBuf>>) {
 }
 
 
-async fn root(State(state): State<AppState>, axumPath((realod,dim , z, x,y)): axumPath<(i32, String, i32, i32, i32)>) ->  Result<impl axum::response::IntoResponse, ()> {
+async fn root(State(state): State<AppState>, axumPath((reload,dim , z, x,y)): axumPath<(i32, String, i32, i32, i32)>) ->  Result<impl axum::response::IntoResponse, ()> {
     
     let start_time = Instant::now();
 
@@ -342,8 +342,9 @@ async fn root(State(state): State<AppState>, axumPath((realod,dim , z, x,y)): ax
     //let mut locked_path = state.path.lock().expect("mutex was poisoned");
     //println!("{}", locked_path.file_name().unwrap().to_str().unwrap().to_string());
     //drop(locked_path);
-
+    
     let locked_path = state.stateholder.lock().expect("POISONED");
+    
     //*counter = *counter + 1;
 
     //println!("{}", locked_path.file_name().unwrap().to_str().unwrap().to_string());
@@ -367,18 +368,22 @@ async fn root(State(state): State<AppState>, axumPath((realod,dim , z, x,y)): ax
 
     let maxzoom: i32 = 6;
     let imagedesity: i32 = 2_i32.pow((maxzoom-z) as u32);
+    let multiplyer: u32 = (256.0/imagedesity as f32).floor() as u32;
  
     //let onetilesize: i32 = (256.0/imagedesity as f32).floor() as i32;
 
     let startingx: i32 = x * imagedesity;
     let startingy: i32 = y * imagedesity;
 
+    let mut scaled_image: DynamicImage;
+
     //let elapsed_copying;
 
 
 
-    let mut imgbuf = image::ImageBuffer::new((512 * imagedesity) as u32,(512 * imagedesity) as u32);
-    
+    //let mut imgbuf = image::ImageBuffer::new((512 * imagedesity) as u32,(512 * imagedesity) as u32);
+    //OR
+    let mut imgbuf = image::ImageBuffer::new(256, 256);
 
 
 
@@ -391,45 +396,22 @@ async fn root(State(state): State<AppState>, axumPath((realod,dim , z, x,y)): ax
 
             currenty = yaxis + startingy;
 
-            
-            
+            //targetfile = [path_to_world, &PathBuf::from(format!(r".\{}\day\{},{}.png", dim,currentx, currenty))].iter().collect();
+            targetfile = path_to_world.join(format!(r".\{}\day\{},{}.png", dim,currentx, currenty));
 
-            //targetfile = format!("{}/day/{},{}.png", dim, currentx, currenty);
-            targetfile = [path_to_world, &PathBuf::from(format!(r".\{}\day\{},{}.png", dim,currentx, currenty))].iter().collect();
-            //targetfile = PathBuf::from(format!("\\{}\\day\\{},{}.png", dim, currentx, currenty));
-            //println!("{}", targetfile.to_str().unwrap().to_string());
-            //let path = Path::new(&targetfile);
-
-            
-            //if targetfile.exists() {
-                //println!("{} exists!", targetfile);
-            
-            //let copying = Instant::now();
-            
+            //OR
+            //let mutex_time = Instant::now();
             if let Ok(tempimg) = image::open(targetfile) {
-                
+                //let mutex_elapsed = mutex_time.elapsed();
+
+                //println!("check: {:?}",mutex_elapsed);
+
                 found = true;
-                imgbuf.copy_from(&tempimg, (512*xaxis) as u32, (512*yaxis) as u32);
+                scaled_image = tempimg.resize(multiplyer,multiplyer, FilterType::Nearest);
+
+                imgbuf.copy_from(&scaled_image,multiplyer*xaxis as u32, multiplyer*yaxis as u32);
+
             }
-            
-            
-            //println!("{}", onetilesize);
-            
-            
-            
-
-
-            
-            
-            //let save: String = format!("./tiles/{}/{}.png", x, y);
-
-            //fs::create_dir(format!("./tiles/{}",x));
-
-            
-            //imgbuf.save(save).unwrap();
-            //elapsed_copying = copying.elapsed();
-
-            //}
             
         }
     }
@@ -447,19 +429,20 @@ async fn root(State(state): State<AppState>, axumPath((realod,dim , z, x,y)): ax
         ]);
 
         let start_time_1 = Instant::now();
-        //let tempimg = image::open(&checkfile).unwrap();
-
-        //let tile_scaled = tempimg.resize(256, 256, FilterType::Nearest);
-        let tile_scaled = &DynamicImage::ImageRgba8(imgbuf).resize(256, 256, FilterType::Nearest);
-
+        
+        /*
         let mut buffer = BufWriter::new(Cursor::new(Vec::new()));
 
-        tile_scaled.write_to(&mut buffer, ImageFormat::Png).unwrap();
+        imgbuf.write_to(&mut buffer, ImageFormat::Png).unwrap();
 
-        let raw: Vec<u8> = buffer.into_inner().unwrap().into_inner();
+        let raw: Vec<u8> = buffer.into_inner().unwrap().into_inner();*/
+
+        let mut raw = Vec::new();
+        imgbuf.write_to(&mut Cursor::new(&mut raw), ImageFormat::Png).unwrap();
+        let bytes = Bytes::from(raw);
 
         // Convert stream to axum HTTP body
-        let bytes = Bytes::from(raw);
+        //let bytes = Bytes::from(raw);
         let body = Full::new(bytes);
         let elapsed_time_1 = start_time_1.elapsed();
 
