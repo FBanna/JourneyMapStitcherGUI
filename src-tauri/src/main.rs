@@ -316,7 +316,7 @@ async fn server(stateholder: Arc<Mutex<PathBuf>>) {
     let app = Router::new()
         // `GET /` goes to `root`
 
-        .route("/:r/:p/:z/:x/:y", get(root))
+        .route("/:reload/:dim/:zoom/:x/:y", get(root))
         .with_state(state);
 
     // run our app with hyper
@@ -332,7 +332,7 @@ async fn server(stateholder: Arc<Mutex<PathBuf>>) {
 
 async fn root(State(state): State<AppState>, axumPath((reload,dim , z, x,y)): axumPath<(i32, String, i32, i32, i32)>) ->  Result<impl axum::response::IntoResponse, ()> {
     
-    let start_time = Instant::now();
+    //let start_time = Instant::now();
 
     let mut found: bool = false;
 
@@ -396,62 +396,89 @@ async fn root(State(state): State<AppState>, axumPath((reload,dim , z, x,y)): ax
 
             currenty = yaxis + startingy;
 
-            //targetfile = [path_to_world, &PathBuf::from(format!(r".\{}\day\{},{}.png", dim,currentx, currenty))].iter().collect();
-            targetfile = path_to_world.join(format!(r".\{}\day\{},{}.png", dim,currentx, currenty));
+            match dim.as_ref() {
 
-            //OR
-            //let mutex_time = Instant::now();
-            if let Ok(tempimg) = image::open(targetfile) {
-                //let mutex_elapsed = mutex_time.elapsed();
+                "the_nether" => {
+                    for layer in (0..=7).rev(){
+                        targetfile = path_to_world.join(format!(r".\the_nether\{}\{},{}.png", layer,currentx, currenty));
 
-                //println!("check: {:?}",mutex_elapsed);
-
-                found = true;
-                scaled_image = tempimg.resize(multiplyer,multiplyer, FilterType::Nearest);
-
-                imgbuf.copy_from(&scaled_image,multiplyer*xaxis as u32, multiplyer*yaxis as u32);
-
-            }
+                        if let Ok(tempimg) = image::open(targetfile) {
+                            //let mutex_elapsed = mutex_time.elapsed();
             
+                            //println!("check: {:?}",mutex_elapsed);
+            
+                            found = true;
+                            scaled_image = tempimg.resize(multiplyer,multiplyer, FilterType::Nearest);
+            
+                            imgbuf.copy_from(&scaled_image,multiplyer*xaxis as u32, multiplyer*yaxis as u32);
+                            break;
+
+                        }
+                    }
+                },
+
+
+                _ => {
+                    
+                    targetfile = path_to_world.join(format!(r".\{}\day\{},{}.png", dim,currentx, currenty));
+
+                    //OR
+                    //let mutex_time = Instant::now();
+                    if let Ok(tempimg) = image::open(targetfile) {
+                        //let mutex_elapsed = mutex_time.elapsed();
+
+                        //println!("check: {:?}",mutex_elapsed);
+
+                        found = true;
+                        scaled_image = tempimg.resize(multiplyer,multiplyer, FilterType::Nearest);
+
+                        imgbuf.copy_from(&scaled_image,multiplyer*xaxis as u32, multiplyer*yaxis as u32);
+
+                    }
+                }
+            }
+
+            //targetfile = [path_to_world, &PathBuf::from(format!(r".\{}\day\{},{}.png", dim,currentx, currenty))].iter().collect();
         }
     }
-    let elapsed_time = start_time.elapsed();
+    //let elapsed_time = start_time.elapsed();
     
 
     
 
     //let body;
-    if found == true {
-        // Headers
-        let headers = AppendHeaders([
-            (header::CONTENT_TYPE, "image/png"),
-            (header::CONTENT_DISPOSITION, "inline; filename=\"test.png\"")
-        ]);
-
-        let start_time_1 = Instant::now();
-        
-        /*
-        let mut buffer = BufWriter::new(Cursor::new(Vec::new()));
-
-        imgbuf.write_to(&mut buffer, ImageFormat::Png).unwrap();
-
-        let raw: Vec<u8> = buffer.into_inner().unwrap().into_inner();*/
-
-        let mut raw = Vec::new();
-        imgbuf.write_to(&mut Cursor::new(&mut raw), ImageFormat::Png).unwrap();
-        let bytes = Bytes::from(raw);
-
-        // Convert stream to axum HTTP body
-        //let bytes = Bytes::from(raw);
-        let body = Full::new(bytes);
-        let elapsed_time_1 = start_time_1.elapsed();
-
-        println!("Elapsed time: {:?}, {:?}, {:?}", elapsed_time,elapsed_time_1,found);
-        Ok((headers, body))
-    } else {
-        Err(())
+    //if found == true {
+    match found {
+        true => {
+            let headers = AppendHeaders([
+                (header::CONTENT_TYPE, "image/png"),
+                (header::CONTENT_DISPOSITION, "inline; filename=\"test.png\"")
+            ]);
+    
+            //let start_time_1 = Instant::now();
+            
+            /*
+            let mut buffer = BufWriter::new(Cursor::new(Vec::new()));
+    
+            imgbuf.write_to(&mut buffer, ImageFormat::Png).unwrap();
+    
+            let raw: Vec<u8> = buffer.into_inner().unwrap().into_inner();*/
+    
+            let mut raw = Vec::new();
+            imgbuf.write_to(&mut Cursor::new(&mut raw), ImageFormat::Png).unwrap();
+            let bytes = Bytes::from(raw);
+    
+            // Convert stream to axum HTTP body
+            //let bytes = Bytes::from(raw);
+            let body = Full::new(bytes);
+            //let elapsed_time_1 = start_time_1.elapsed();
+    
+            //println!("Elapsed time: {:?}, {:?}, {:?}", elapsed_time,elapsed_time_1,found);
+            Ok((headers, body))
+        },
+        false => Err(())
     }
-
+        // Headers
 }
 
 #[tauri::command]

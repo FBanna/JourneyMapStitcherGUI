@@ -135,21 +135,11 @@
     console.log("refreshed!");
 
     reloads = reloads + 1
-
-    console.log("1")
-    
-    
     
     console.log("http://localhost:3000/" + reloads + "/" + dimension.value + "/{z}/{x}/{y}")
     tileUrl.setUrl("http://localhost:3000/" + reloads + "/" + dimension.value + "/{z}/{x}/{y}")
-    console.log("1")
 
     map.setView([0,0],2)
-
-    
-
-
-    console.log("done")
 
   })  
   
@@ -194,13 +184,22 @@
   function changeDimension() {
     if (dimension.value == "overworld" && newdimension.value == "the_nether") {
       
-      lat.value = lat.value/8
-      lng.value = lng.value/8
+      
+
+      //[lat.value, lng.value] = map.target.getCenter()
+      var mapcenter = map.getCenter()
+
+      lat.value = mapcenter.lat/8
+      lng.value = mapcenter.lng/8
+
+      //console.log(map.getCenter(), lat.value, lng.value)
       map.setView([lat.value, lng.value])
     } else if (dimension.value == "the_nether" && newdimension.value == "overworld") {
 
-      lat.value = lat.value*8
-      lng.value = lng.value*8
+      var mapcenter = map.getCenter()
+
+      lat.value = mapcenter.lat*8
+      lng.value = mapcenter.lng*8
       map.setView([lat.value, lng.value])
     } else {
 
@@ -335,7 +334,7 @@
     background-color: #ae00ff;
     left: 0px;
     bottom: 0px;
-    width: 100px;
+    width: 150px;
     height: 40px;
     position: absolute;
     z-index: 400;
