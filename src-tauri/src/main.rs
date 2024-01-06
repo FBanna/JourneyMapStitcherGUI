@@ -427,6 +427,7 @@ async fn root(State(state): State<AppState>, axumPath((reload,dim , z, x,y)): ax
                     if let Ok(tempimg) = image::open(targetfile) {
                         //let mutex_elapsed = mutex_time.elapsed();
 
+                        
                         //println!("check: {:?}",mutex_elapsed);
 
                         found = true;
@@ -542,17 +543,6 @@ fn get_selected(tauri_new_paths: TauriState<NewPath>, tauri_current_path: TauriS
 
     let new_paths = tauri_new_paths.paths.lock().expect("POISONED");
 
-    /*
-    for list in 0usize..4{
-        println!("{}", list);
-        for item in 0..new_paths[list].len(){
-            if new_paths[list][item] == current_path.clone(){
-                
-                return [list, item].to_vec()
-                
-            }
-        }
-    }*/
 
     for launcher in 0..2 {
         for list in 0..new_paths[launcher].len() {
@@ -567,7 +557,7 @@ fn get_selected(tauri_new_paths: TauriState<NewPath>, tauri_current_path: TauriS
         }
     }
 
-    return [0, 0].to_vec()
+    return [0, 0, 0].to_vec()
 
 }   
 
