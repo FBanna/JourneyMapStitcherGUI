@@ -121,6 +121,12 @@
 
   var reloads = 0
 
+  var waypoints;
+
+  var markers = [];
+
+  var marker_count;
+
   window.getCurrent().listen(TauriEvent.WINDOW_CLOSE_REQUESTED, () => {
     console.log("clicked")
     invoke("store_last_world")
@@ -141,7 +147,28 @@
 
     map.setView([0,0],2)
 
-  })  
+    get_waypoints()
+
+  })
+
+  async function get_waypoints(){
+    waypoints = await invoke("get_waypoints")
+
+    console.log("cool")
+    marker_count = waypoints.length
+    //
+
+    for (let i = 0; i<waypoints.length;i++) {
+      
+
+      markers[i] = new L.Marker([(-128*(waypoints[i].z)), (128*(waypoints[i].x))]);
+      //markers[i] = new L.Marker([0,0]);
+      map.addLayer(markers[i]);
+      console.log(waypoints[i].name, waypoints[i].x, waypoints[i].z, "ADDED!")
+    }
+
+
+  }
   
   
   onMounted(() => {

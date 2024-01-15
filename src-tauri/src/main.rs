@@ -2,6 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod get_world;
+mod get_waypoint;
 
 use std::path::Path;
 use std::path::PathBuf;
@@ -9,6 +10,7 @@ use std::thread::JoinHandle;
 
 use axum::extract::path;
 use futures_util::lock;
+use get_waypoint::WayPoint;
 use image::{GenericImage, GenericImageView, ImageBuffer, Pixel, Primitive, EncodableLayout, Rgba, DynamicImage};
 use tracing_subscriber::fmt::format;
 use std::env;
@@ -562,6 +564,18 @@ fn get_selected(tauri_new_paths: TauriState<NewPath>, tauri_current_path: TauriS
 }   
 
 
+#[tauri::command]
+fn get_waypoints(tauri_current_path: TauriState<CurrentPath>, ) -> Vec<WayPoint> { // -> Vec<String, Vec<i32>, Vec<i32>>
+    
+    let locked_path = tauri_current_path.path.lock().expect("POISONED");
+
+    let waypoints = get_waypoint::waypoint_paths(locked_path.clone());
+    drop(locked_path);
+
+    return waypoints;
+}
+
+
 struct CurrentPath {
     path: Arc<Mutex<PathBuf>>
 }
@@ -598,7 +612,7 @@ async fn main() {
     tauri::Builder::default()
         .manage(CurrentPath { path: pathChange })
         .manage(NewPath {paths: Arc::new(Mutex::new(Vec::new()))})
-        .invoke_handler(tauri::generate_handler![stitch, select_world_window, get_world, set_world, store_last_world, get_selected])
+        .invoke_handler(tauri::generate_handler![stitch, select_world_window, get_world, set_world, store_last_world, get_selected, get_waypoints])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 
