@@ -13,6 +13,14 @@ use std::io::prelude::*;
 use std::borrow::Cow;
 use paths_as_strings;
 
+
+#[derive(Deserialize, PartialEq)]
+pub enum Dimension {
+    String(Vec<String>),
+    Int(Vec<i32>)
+}
+
+
 #[derive(Deserialize)]
 struct RawWayPoint{
     id: String,
@@ -28,7 +36,7 @@ struct RawWayPoint{
     enable: bool,
     r#type: String,
     origin: String,
-    dimensions: Vec<String>,
+    dimensions: Dimension,
     persistent: bool,
     showDeviation: bool,
     iconColor: i32,
@@ -56,6 +64,38 @@ trait translation{
 }
 impl translation for RawWayPoint{
     fn translate(&self) -> WayPoint{
+
+        if Dimension::Int(Vec::new()) == self.dimensions {
+
+            let mut converted_dimensions: Vec<String>;
+            for entry in self.dimensions.into_iter() {
+                match entry{
+                    0 => converted_dimensions.push("overworld".to_string()),
+                    1 => converted_dimensions.push("the_end".to_string()),
+                    -1 => converted_dimensions.push("the_nether".to_string()),
+                    _ => println!("ERROR")
+                }
+            }
+
+            let new = WayPoint{
+                name: self.name.clone(),
+                x: self.x,
+                z: self.z,
+                colour: Colour{
+                    r: self.r,
+                    g: self.g,
+                    b: self.b
+                },
+                dimensions: converted_dimensions
+            };
+
+        } else {
+            let mut converted_dimensions: Vec<String>;
+            for entry in self.dimensions.into_iter(){
+                
+            }
+        }
+
         let new = WayPoint{
             name: self.name.clone(),
             x: self.x,
@@ -71,16 +111,34 @@ impl translation for RawWayPoint{
     }
 }
 
+impl IntoIterator for Dimension {
+    type Item = i32;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.into_iter()
+    }
+}
+
+impl IntoIterator for Dimension {
+    type Item = String;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.into_iter()
+    }
+}
 
 pub fn waypoint_paths(path_to_world:PathBuf) -> Vec<WayPoint> {
     let mut waypoints: Vec<WayPoint> = Vec::new();
     let mut new_way_point: WayPoint;
 
     let path_to_waypoints = &path_to_world.join("waypoints/");
-
+    let mut i = 0;
     if let Ok(paths) = fs::read_dir(path_to_waypoints) {
         for path in paths {
-            //println!("{:?}", path);
+            i = i+1;
+            println!("{:?}", path);
             let file = File::open(path.unwrap().path().clone()).expect("msg");
             let reader = BufReader::new(file);
 
@@ -96,6 +154,7 @@ pub fn waypoint_paths(path_to_world:PathBuf) -> Vec<WayPoint> {
 
         }
     }
+    println!("{}", i);
     //println!("{:?}", waypoints)
     return waypoints
 }
