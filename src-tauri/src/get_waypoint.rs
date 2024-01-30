@@ -5,7 +5,7 @@ use std::fs::File;
 use std::io::BufReader;
 use std::path::{Path, PathBuf};
 
-use std::result;
+use std::{result, string};
 use std::{fs};
 use directories::{BaseDirs, UserDirs, ProjectDirs};
 use tauri::api::path::data_dir;
@@ -14,14 +14,14 @@ use std::borrow::Cow;
 use paths_as_strings;
 
 
-#[derive(Deserialize, PartialEq)]
+#[derive(Deserialize, PartialEq, Clone)]
 pub enum Dimension {
     String(Vec<String>),
     Int(Vec<i32>)
 }
 
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 struct RawWayPoint{
     id: String,
     name: String,
@@ -64,11 +64,10 @@ trait translation{
 }
 impl translation for RawWayPoint{
     fn translate(&self) -> WayPoint{
-
+        let mut converted_dimensions: Vec<String> = Vec::new();
         if Dimension::Int(Vec::new()) == self.dimensions {
 
-            let mut converted_dimensions: Vec<String>;
-            for entry in self.dimensions.into_iter() {
+            for entry in self.dimensions.clone().to_int_vec() {
                 match entry{
                     0 => converted_dimensions.push("overworld".to_string()),
                     1 => converted_dimensions.push("the_end".to_string()),
@@ -77,22 +76,15 @@ impl translation for RawWayPoint{
                 }
             }
 
-            let new = WayPoint{
-                name: self.name.clone(),
-                x: self.x,
-                z: self.z,
-                colour: Colour{
-                    r: self.r,
-                    g: self.g,
-                    b: self.b
-                },
-                dimensions: converted_dimensions
-            };
-
-        } else {
-            let mut converted_dimensions: Vec<String>;
-            for entry in self.dimensions.into_iter(){
-                
+        } else if Dimension::String(Vec::new()) == self.dimensions {
+            
+            for entry in self.dimensions.clone().to_string_vec(){
+                match entry.as_str(){
+                    "minecraft:overworld" => converted_dimensions.push("overworld".to_string()),
+                    "minecraft:the_end" => converted_dimensions.push("the_end".to_string()),
+                    "minecraft:the_nether" => converted_dimensions.push("the_nether".to_string()),
+                    _ => println!("ERROR")
+                }
             }
         }
 
@@ -105,27 +97,29 @@ impl translation for RawWayPoint{
                 g: self.g,
                 b: self.b
             },
-            dimensions: self.dimensions.clone()
+            dimensions: converted_dimensions
         };
         return new;
     }
 }
 
-impl IntoIterator for Dimension {
-    type Item = i32;
-    type IntoIter = std::vec::IntoIter<Self::Item>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.into_iter()
+impl Dimension {
+    fn to_string_vec(self) -> Vec<String> {
+        if let Dimension::String(string_vec) = self {
+            string_vec
+        } else {
+            println!("NOT A STRING VEC!");
+            return Vec::new()
+        }
     }
-}
 
-impl IntoIterator for Dimension {
-    type Item = String;
-    type IntoIter = std::vec::IntoIter<Self::Item>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.into_iter()
+    fn to_int_vec(self) -> Vec<i32> {
+        if let Dimension::Int(int_vec) = self {
+            int_vec
+        } else {
+            println!("NOT AN INT VEC!");
+            return Vec::new()
+        }
     }
 }
 
