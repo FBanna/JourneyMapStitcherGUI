@@ -124,8 +124,9 @@
   var waypoints;
 
   var markers = [];
-
-  var marker_count;
+  var marker_count = 0;
+  var marker;
+  var marker_options
 
   window.getCurrent().listen(TauriEvent.WINDOW_CLOSE_REQUESTED, () => {
     console.log("clicked")
@@ -154,18 +155,34 @@
   async function get_waypoints(){
     waypoints = await invoke("get_waypoints")
 
-    console.log("cool")
+
+    for (let i = 0; i<marker_count;i++) {
+      map.removeLayer(markers[i])
+    }
+    
+
     marker_count = waypoints.length
-    //
+    console.log(marker_count)
+
+    
+
+    
 
     for (let i = 0; i<waypoints.length;i++) {
-      
+    
+      markers[i] = new L.Marker(
+        [(-(waypoints[i].z)/128), ((waypoints[i].x)/128)],
+        marker_options
+      );
 
-      markers[i] = new L.Marker([(-128*(waypoints[i].z)), (128*(waypoints[i].x))]);
-      //markers[i] = new L.Marker([0,0]);
+      marker_options = {
+        title: waypoints[i].name
+      }
+      
       map.addLayer(markers[i]);
       console.log(waypoints[i].name, waypoints[i].x, waypoints[i].z, "ADDED!")
     }
+
 
 
   }

@@ -66,7 +66,7 @@
     // 0, 0, 1, 1
     // 0, 1, 0, 1
 
-    var show = ref([[true, true, true], [true, true, true]]) // types within launchers
+    var show = ref([[true, true, true], [true, true, true]]) // type within launchers
 
     var selected = ref([0, 0, 0]) // launchers, types, index
 

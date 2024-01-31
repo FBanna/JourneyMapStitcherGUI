@@ -27,7 +27,7 @@ struct RawWayPoint{
     id: String,
     name: String,
     icon: String,
-    colorizedIcon: String,
+    colorizedIcon: Option<String>,
     x: i32,
     y: i32,
     z: i32,
@@ -39,9 +39,9 @@ struct RawWayPoint{
     origin: String,
     dimensions: Dimension,
     persistent: bool,
-    showDeviation: bool,
-    iconColor: i32,
-    customIconColor: bool
+    showDeviation: Option<bool>,
+    iconColor: Option<i32>,
+    customIconColor: Option<bool>
 }
 
 
@@ -65,10 +65,13 @@ trait translation{
     fn translate(&self) -> WayPoint;
 }
 impl translation for RawWayPoint{
+
     fn translate(&self) -> WayPoint{
+
         let mut converted_dimensions: Vec<String> = Vec::new();
+
         if let Dimension::Int(_) = self.dimensions {
-            println!("INT!");
+
             for entry in self.dimensions.clone().to_int_vec() {
                 match entry{
                     0 => converted_dimensions.push("overworld".to_string()),
@@ -79,7 +82,6 @@ impl translation for RawWayPoint{
             }
 
         } else if let Dimension::String(_) = self.dimensions {
-            println!("String!");
             
             for entry in self.dimensions.clone().to_string_vec(){
                 match entry.as_str(){
@@ -90,7 +92,8 @@ impl translation for RawWayPoint{
                 }
             }
         }
-        println!("{:?}", converted_dimensions);
+
+        //println!("{:?}", converted_dimensions);
         let new = WayPoint{
             name: self.name.clone(),
             x: self.x,
@@ -152,6 +155,6 @@ pub fn waypoint_paths(path_to_world:PathBuf) -> Vec<WayPoint> {
         }
     }
     println!("{}", i);
-    println!("{:?}", waypoints);
+    //println!("{:?}", waypoints);
     return waypoints
 }

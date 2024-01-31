@@ -565,7 +565,7 @@ fn get_selected(tauri_new_paths: TauriState<NewPath>, tauri_current_path: TauriS
 
 
 #[tauri::command]
-fn get_waypoints(tauri_current_path: TauriState<CurrentPath>, ) -> Vec<WayPoint> { // -> Vec<String, Vec<i32>, Vec<i32>>
+fn get_waypoints(tauri_current_path: TauriState<CurrentPath> ) -> Vec<WayPoint> { // -> Vec<String, Vec<i32>, Vec<i32>>
     
     let locked_path = tauri_current_path.path.lock().expect("POISONED");
 
