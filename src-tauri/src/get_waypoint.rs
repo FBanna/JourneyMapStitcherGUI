@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use serde_json::{Result, Value};
+use serde_json::{Number, Result, Value};
 use tracing_subscriber::field::debug;
 use std::fs::File;
 use std::io::BufReader;
@@ -15,6 +15,7 @@ use paths_as_strings;
 
 
 #[derive(Deserialize, PartialEq, Clone)]
+#[serde(untagged)]
 pub enum Dimension {
     String(Vec<String>),
     Int(Vec<i32>)
@@ -43,14 +44,15 @@ struct RawWayPoint{
     customIconColor: bool
 }
 
-#[derive(Serialize)]
+
+#[derive(Serialize, Debug)]
 pub struct Colour{
     r:i32,
     g:i32,
     b:i32
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub struct WayPoint{
     name: String,
     x: i32,
@@ -65,8 +67,8 @@ trait translation{
 impl translation for RawWayPoint{
     fn translate(&self) -> WayPoint{
         let mut converted_dimensions: Vec<String> = Vec::new();
-        if Dimension::Int(Vec::new()) == self.dimensions {
-
+        if let Dimension::Int(_) = self.dimensions {
+            println!("INT!");
             for entry in self.dimensions.clone().to_int_vec() {
                 match entry{
                     0 => converted_dimensions.push("overworld".to_string()),
@@ -76,7 +78,8 @@ impl translation for RawWayPoint{
                 }
             }
 
-        } else if Dimension::String(Vec::new()) == self.dimensions {
+        } else if let Dimension::String(_) = self.dimensions {
+            println!("String!");
             
             for entry in self.dimensions.clone().to_string_vec(){
                 match entry.as_str(){
@@ -87,7 +90,7 @@ impl translation for RawWayPoint{
                 }
             }
         }
-
+        println!("{:?}", converted_dimensions);
         let new = WayPoint{
             name: self.name.clone(),
             x: self.x,
@@ -132,15 +135,15 @@ pub fn waypoint_paths(path_to_world:PathBuf) -> Vec<WayPoint> {
     if let Ok(paths) = fs::read_dir(path_to_waypoints) {
         for path in paths {
             i = i+1;
-            println!("{:?}", path);
+            //println!("{:?}", path);
             let file = File::open(path.unwrap().path().clone()).expect("msg");
             let reader = BufReader::new(file);
 
             // Read the JSON contents of the file as an instance of `User`.
             let json: RawWayPoint = serde_json::from_reader(reader).expect("msg");
-
+            
             new_way_point = json.translate();
-
+            //println!("{:?}", json.dimensions[0])
             waypoints.push(new_way_point);
 
             
@@ -149,6 +152,6 @@ pub fn waypoint_paths(path_to_world:PathBuf) -> Vec<WayPoint> {
         }
     }
     println!("{}", i);
-    //println!("{:?}", waypoints)
+    println!("{:?}", waypoints);
     return waypoints
 }
