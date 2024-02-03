@@ -116,17 +116,17 @@
 
   var ifCtrl = ref(0)
 
-  var marker;
+  var marker; //box
   var selection;
 
   var reloads = 0
 
   var waypoints;
-
   var markers = [];
-  var marker_count = 0;
-  var marker;
   var marker_options
+  var temp_marker;
+
+  //get_waypoints()
 
   window.getCurrent().listen(TauriEvent.WINDOW_CLOSE_REQUESTED, () => {
     console.log("clicked")
@@ -153,36 +153,44 @@
   })
 
   async function get_waypoints(){
+    //console.log("before loading", waypoints.length,markers.length)
     waypoints = await invoke("get_waypoints")
 
 
-    for (let i = 0; i<marker_count;i++) {
-      map.removeLayer(markers[i])
+    //console.log("after loading", waypoints.length,markers.length)
+    /*for (let i = 0; i<markers.length; i++) {
+      console.log(markers[i])
+    }*/
+    for (let k = 0; k<markers.length;k++) {
+      //console.log(k)
+      map.removeLayer(markers[k])
+      
     }
-    
+    markers = []
+    //console.log("after deleting", waypoints.length,markers.length)
 
-    marker_count = waypoints.length
-    console.log(marker_count)
 
-    
-
-    
 
     for (let i = 0; i<waypoints.length;i++) {
-    
-      markers[i] = new L.Marker(
-        [(-(waypoints[i].z)/128), ((waypoints[i].x)/128)],
-        marker_options
-      );
+      //console.log(waypoints[i].dimensions.length)
+      for (let j = 0; j<waypoints[i].dimensions.length;j++){
+        if (dimension.value == waypoints[i].dimensions[j]){
 
-      marker_options = {
-        title: waypoints[i].name
+          marker_options = {
+            title: (waypoints[i].name)
+          }
+
+          temp_marker = new L.Marker(
+            [(-(waypoints[i].z)/128), ((waypoints[i].x)/128)],
+            marker_options
+          )
+          map.addLayer(temp_marker);
+          markers.push(temp_marker)
+          //console.log(waypoints[i].name, waypoints[i].x, waypoints[i].z, waypoints[i].dimensions[j], "ADDED!")
+          //break
+        }
       }
-      
-      map.addLayer(markers[i]);
-      console.log(waypoints[i].name, waypoints[i].x, waypoints[i].z, "ADDED!")
     }
-
 
 
   }
@@ -257,6 +265,8 @@
     var url = "http://localhost:3000/" + reloads + "/" + dimension.value + "/{z}/{x}/{y}"
     console.log(url)
     tileUrl.setUrl(url)
+
+    get_waypoints()
 
   }
 
