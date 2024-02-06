@@ -378,7 +378,7 @@
 <style>
 
   .waypointlist {
-    
+    position: relative;
     
     
     width: 180px;
@@ -386,8 +386,11 @@
     top: 320px;
     position: fixed;
     left: 20px;*/
-    margin-left: 20px;
-    margin-top: 10px;
+    display: block;
+    overflow:hidden;
+    height: 50px;
+  
+    left: 20px;
     background-color: #ae00ff;
     border-radius: 3px;
   }
