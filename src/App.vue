@@ -10,6 +10,8 @@
   <div class="inputsBorder">
   
     <div class="inputs">
+
+      
       
       <input type="radio" class="radios" name="type" value="center" v-model="type">
       <label for="center" @click="type = 'center'"> center</label><br>
@@ -57,11 +59,17 @@
 
     </div>
 
+    <div class="waypointlist">
+      <ul v-for="(waypoint, i) in waypoints">
+        {{ waypoint.name }}
+      </ul>
+    </div>
+    
+
+
     <div class="calls">
       <button class="inputsButton" @click="goto">Goto</button>
-      <br><br>
       <button class="inputsButton" @click="stitch">Stitch</button>
-      <br><br>
       <button class="inputsButton" @click="select_world_window">Select world</button>
     </div>
 
@@ -121,12 +129,12 @@
 
   var reloads = 0
 
-  var waypoints;
+  var waypoints = ref();
   var markers = [];
   var marker_options
   var temp_marker;
 
-  //get_waypoints()
+  get_waypoints()
 
   window.getCurrent().listen(TauriEvent.WINDOW_CLOSE_REQUESTED, () => {
     console.log("clicked")
@@ -154,7 +162,7 @@
 
   async function get_waypoints(){
     //console.log("before loading", waypoints.length,markers.length)
-    waypoints = await invoke("get_waypoints")
+    waypoints.value = await invoke("get_waypoints")
 
 
     //console.log("after loading", waypoints.length,markers.length)
@@ -171,17 +179,17 @@
 
 
 
-    for (let i = 0; i<waypoints.length;i++) {
+    for (let i = 0; i<waypoints.value.length;i++) {
       //console.log(waypoints[i].dimensions.length)
-      for (let j = 0; j<waypoints[i].dimensions.length;j++){
-        if (dimension.value == waypoints[i].dimensions[j]){
+      for (let j = 0; j<waypoints.value[i].dimensions.length;j++){
+        if (dimension.value == waypoints.value[i].dimensions[j]){
 
           marker_options = {
-            title: (waypoints[i].name)
+            title: (waypoints.value[i].name)
           }
 
           temp_marker = new L.Marker(
-            [(-(waypoints[i].z)/128), ((waypoints[i].x)/128)],
+            [(-(waypoints.value[i].z)/128), ((waypoints.value[i].x)/128)],
             marker_options
           )
           map.addLayer(temp_marker);
@@ -369,6 +377,21 @@
 
 <style>
 
+  .waypointlist {
+    
+    
+    
+    width: 180px;
+    /*height: 40px; 
+    top: 320px;
+    position: fixed;
+    left: 20px;*/
+    margin-left: 20px;
+    margin-top: 10px;
+    background-color: #ae00ff;
+    border-radius: 3px;
+  }
+
   .leaflet-control-attribution.leaflet-control {
     display: none;
   }
@@ -406,6 +429,7 @@
     font-size: 13px;
     transition-duration: 0.2s;
     font-family: Verdana, sans-serif;
+    margin-bottom: 10px;
 
   }
 
@@ -456,10 +480,12 @@
 
   .inputsForm{
     border-radius: 3px;
+    width: 180px;
     border: 2px solid #ae00ff;
     -webkit-transition: 0.2s;
     transition: 0.2s;
     outline: none;
+    box-sizing:border-box
   }
 
   .inputsForm:focus{
