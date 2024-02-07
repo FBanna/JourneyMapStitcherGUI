@@ -60,9 +60,13 @@
     </div>
 
     <div class="waypointlist">
-      <ul v-for="(waypoint, i) in waypoints">
-        {{ waypoint.name }}
-      </ul>
+      <div class="scrollbar">
+        <ul v-for="(waypoint, i) in waypoints">
+          <div class="waypoint">
+            {{ waypoint.name }}
+          </div>
+        </ul>
+      </div>
     </div>
     
 
@@ -378,21 +382,29 @@
 <style>
 
   .waypointlist {
-    position: relative;
     
-    
-    width: 180px;
-    /*height: 40px; 
-    top: 320px;
-    position: fixed;
-    left: 20px;*/
-    display: block;
-    overflow:hidden;
-    height: 50px;
-  
-    left: 20px;
     background-color: #ae00ff;
+    width: 180px;  
+    position: relative;  
+    overflow: hidden;
+    left: 20px;
+    
     border-radius: 3px;
+    margin-top: 10px;
+    margin-bottom: 30px;
+    text-indent: -25px;
+    font-size: 12px;
+  }
+
+  .scrollbar{
+    overflow-y:auto;
+    min-height: 20px;
+    max-height: 100px;
+  }
+
+  .waypoint {
+    background-color: #01AFE4;
+    left: 0px;
   }
 
   .leaflet-control-attribution.leaflet-control {
@@ -466,7 +478,6 @@
 
   .calls{
     position: absolute;
-    right: 20px;
     bottom: 20px;
     width: 180px;
     text-align: center;
@@ -475,8 +486,8 @@
 
   
   .inputs{
-    position: absolute;
-    right: 20px;
+    position: relative;
+    left: 20px;
     top: 20px;
     width: 180px;
   }
