@@ -62,7 +62,7 @@
     <div class="waypointlist">
       <div class="scrollbar">
         <div v-for="(waypoint, i) in waypoints">
-          <div class="waypoint">
+          <div class="waypoint" @click="gotowaypoint(i)">
             {{ waypoint.name }}
           </div>
         </div>
@@ -203,6 +203,20 @@
         }
       }
     }
+
+
+  }
+
+  function gotowaypoint(i) {
+    console.log(waypoints.value[i].name, newdimension.value)
+
+    x1.value = waypoints.value[i].x
+    z1.value = waypoints.value[i].z
+
+    newdimension.value = waypoints.value[i].dimensions[0]
+    console.log(newdimension.value)
+    changeDimension()
+    goto()
 
 
   }
