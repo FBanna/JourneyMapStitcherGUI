@@ -192,13 +192,21 @@
             title: (waypoints.value[i].name)
           }
 
-          temp_marker = new L.Marker(
-            [(-(waypoints.value[i].z)/128), ((waypoints.value[i].x)/128)],
-            marker_options
-          )
+          if (dimension.value == "the_nether"){
+            temp_marker = new L.Marker(
+              [(-((waypoints.value[i].z)/128)/8), (((waypoints.value[i].x)/128)/8)],
+              marker_options
+            )
+          } else {
+            temp_marker = new L.Marker(
+              [(-(waypoints.value[i].z)/128), ((waypoints.value[i].x)/128)],
+              marker_options
+            )
+          }
+          
           map.addLayer(temp_marker);
           markers.push(temp_marker)
-          //console.log(waypoints[i].name, waypoints[i].x, waypoints[i].z, waypoints[i].dimensions[j], "ADDED!")
+          console.log(waypoints.value[i].name, waypoints.value[i].x, waypoints.value[i].z, waypoints.value[i].dimensions[j], "ADDED!")
           //break
         }
       }
@@ -210,12 +218,23 @@
   function gotowaypoint(i) {
     console.log(waypoints.value[i].name, newdimension.value)
 
-    x1.value = waypoints.value[i].x
-    z1.value = waypoints.value[i].z
+    
 
     newdimension.value = waypoints.value[i].dimensions[0]
+    
+    
     console.log(newdimension.value)
     changeDimension()
+
+    if (newdimension.value == "the_nether") {
+      x1.value = waypoints.value[i].x/8
+      z1.value = waypoints.value[i].z/8
+    } else {
+      x1.value = waypoints.value[i].x
+      z1.value = waypoints.value[i].z
+    }
+
+
     goto()
 
 
@@ -396,39 +415,66 @@
 <style>
 
   .waypointlist {
-    
-    background-color: #ae00ff;
-    width: 180px;  
-    position: relative;  
-    overflow: hidden;
+    position: relative; 
+    width: 180px; 
     left: 20px;
 
+    margin-top: 20px;
+    margin-bottom: 20px;
+
+    font-size: 12px;
+
+    background-color: #ae00ff;
+    box-sizing: border-box;
+    border: 3px solid #ae00ff;
+    border-radius: 5px;
+     
+    overflow: hidden;
     display: flex;
     flex-direction: column;
-    
-    border-radius: 3px;
-    margin-top: 10px;
-    margin-bottom: 30px;
-    font-size: 12px;
   }
 
   .scrollbar{
-    left: 0px;
     position: relative;
     overflow-y: auto;
     min-height: 20px;
     
   }
 
+  .scrollbar::-webkit-scrollbar {
+    width: 12px;               /* width of the entire scrollbar */
+  }
+
+  .scrollbar::-webkit-scrollbar-track {
+    background: #e0abfb;        /* color of the tracking area */
+    -webkit-border-radius: 10px;
+    border-radius: 5px;
+  }
+
+  .scrollbar::-webkit-scrollbar-thumb {
+    background-color: #ae00ff;    /* color of the scroll thumb */
+    border-radius: 20px;       /* roundness of the scroll thumb */
+    border: 3px solid #e0abfb;  /* creates padding around scroll thumb */
+  }
+
+  .scrollbar::-webkit-scrollbar-thumb:active {
+    background-color: #01AFE4;   /* color of the scroll thumb */
+  }
+
+
+
   .waypoint {
     position: relative;
-    background-color: #01AFE4;
+    background-color: #e0abfb;
     min-height: 20px;
     width: 145px;
     border-radius: 5px;
+
     padding: 2px;
     padding-left: 7px;
-    margin: 7px;
+
+    left: -2px;
+    margin: 5px;
   }
 
   .leaflet-control-attribution.leaflet-control {
@@ -455,6 +501,7 @@
     position: absolute;
     z-index: 400;
     user-select: none;
+    border-top-right-radius: 10px;
   }
 
 
